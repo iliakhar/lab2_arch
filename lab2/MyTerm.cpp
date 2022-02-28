@@ -34,19 +34,9 @@ int MyTerm::mt_setbgcolor(enum mt::colors cl) {
 int MyTerm::showTerm(Ram& ram, Flag& reg) {
 
 	ram.showRam(reg);
-	mt_gotoXY(0, 85);
-	std::cout << "accumulator";
-	mt_gotoXY(3, 82);
-	std::cout << "instructionCounter";
-	mt_gotoXY(6, 86);
-	std::cout << "Operation";
-	mt_gotoXY(9, 88);
-	std::cout << "Flags";
-	mt_gotoXY(10, 86);
+	mt_gotoXY(10, 82);
 	reg.showFlags();
 
-	mt_gotoXY(12, 57);
-	std::cout << "Keys:";
 
 	FILE* data;
 	int res;
@@ -56,12 +46,22 @@ int MyTerm::showTerm(Ram& ram, Flag& reg) {
 		return 1;
 	short strNumb = 13;
 	while (fgets(ch, 29, data)) {
-		mt_gotoXY(strNumb, 55);
-		std::cout << ch;
+		mt_gotoXY(strNumb, 58);
+		std::cout << " " << ch;
 		strNumb++;
 	}
 	fclose(data);
 
+	bc_printBigChar(10, { 1, 13 });
+	for (short i = 10; i <= 46; i += 9)
+		bc_printBigChar(0, {  i, 13 });
 
+	bc_box({ 0, 0 }, { 72, 12 }, "Memory");
+	bc_box({ 72, 0 }, { 30, 3 }, "accumulator");
+	bc_box({ 72, 3 }, { 30, 3 }, "instructionCounter");
+	bc_box({ 72, 6 }, { 30, 3 }, "Operation");
+	bc_box({ 72, 9 }, { 30, 3 }, "Flags");
+	bc_box({ 0, 12 }, { 56, 10 });
+	bc_box({ 57, 12 }, { 46, 10 }, "Keys");std::cout << "\n\n";
 	return 0;
 }

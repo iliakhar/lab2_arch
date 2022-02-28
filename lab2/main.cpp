@@ -1,5 +1,6 @@
 #include<iostream>
 #include<windows.h>
+#include<string>
 #include"MyTerm.h"
 #include"mem.h"
 
@@ -38,5 +39,8 @@ int main() {
 	ram.sc_memorySet(8, 678, reg);
 	ram.sc_memorySet(100, 678, reg);
 	term.showTerm(ram, reg);
-
+	
+	//MyTerm term;
+	//term.bc_printBigChar(9, { 5, 8 });
+	
 }

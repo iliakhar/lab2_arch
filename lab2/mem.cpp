@@ -61,10 +61,9 @@ int Ram::sc_memoryLoad(std::string filename) {
 
 int Ram::showRam(Flag &reg) {
     int emptyDigits, cell;
-    std::cout << "\t\t\t\t    Memory\n";
+    std::cout << "\n  ";
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-            //char ch[6] = { "+0000" };
             sc_memoryGet(i * 10 + j, &cell, reg);
             if (cell < 0) std::cout << "-";
             else std::cout << "+";
@@ -73,10 +72,10 @@ int Ram::showRam(Flag &reg) {
             else emptyDigits = 3;
             for (int k = 0; k < emptyDigits; k++)
                 std::cout << 0;
-            std::cout << abs(cell) << "   ";
+            std::cout << abs(cell) << "  ";
 
         }
-        std::cout << "\n";
+        std::cout << "\n  ";
     }
     return 0;
 }
