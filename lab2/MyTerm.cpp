@@ -46,22 +46,68 @@ int MyTerm::showTerm(Ram& ram, Flag& reg) {
 		return 1;
 	short strNumb = 13;
 	while (fgets(ch, 29, data)) {
-		mt_gotoXY(strNumb, 58);
+		mt_gotoXY(strNumb, 50);
 		std::cout << " " << ch;
 		strNumb++;
 	}
 	fclose(data);
+	bc_printBigNumber(0xFAB2, { 1, 13 });
 
-	bc_printBigChar(10, { 1, 13 });
-	for (short i = 10; i <= 46; i += 9)
-		bc_printBigChar(0, {  i, 13 });
 
 	bc_box({ 0, 0 }, { 72, 12 }, "Memory");
 	bc_box({ 72, 0 }, { 30, 3 }, "accumulator");
 	bc_box({ 72, 3 }, { 30, 3 }, "instructionCounter");
 	bc_box({ 72, 6 }, { 30, 3 }, "Operation");
 	bc_box({ 72, 9 }, { 30, 3 }, "Flags");
-	bc_box({ 0, 12 }, { 56, 10 });
-	bc_box({ 57, 12 }, { 46, 10 }, "Keys");std::cout << "\n\n";
+	bc_box({ 0, 12 }, { 48, 10 });
+	bc_box({ 49, 12 }, { 53, 10 }, "Keys");std::cout << "\n\n";
+	return 0;
+}
+
+int MyTerm::runTerm(Ram& ram, Flag& reg) {
+
+	posInRam = { 1, 0 };
+	ramPosMove(-1, ram, reg);
+	char key;
+	while (1) {
+		key = getch();
+		if (key == 0 || key == 224)
+			key = getch();
+		switch (key) {
+		case 75: ramPosMove(-1, ram, reg);
+			break;
+		case 77: ramPosMove(1, ram, reg);
+			break;
+		case 'e':return 0;
+		default: break;
+		}
+	}
+	return 0;
+}
+
+int MyTerm::ramPosMove(int move, Ram& ram, Flag& reg) {
+
+	int numInRam;
+	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &numInRam, reg);
+	mt_gotoXY(posInRam.Y + 1, (posInRam.X * 7) + 2);
+	ram.showNumInRam(numInRam);
+	mt_setbgcolor(mt::LightMagenta);
+	int border = 9, incr = 1;
+	if (move < 0) {
+		border = 0;
+		incr = -1;
+	}
+	if (posInRam.X != border || posInRam.Y != border)
+		if (posInRam.X == border) {
+			posInRam.X = 9 - border;
+			posInRam.Y += incr;
+		}
+		else posInRam.X += incr;
+	mt_gotoXY(posInRam.Y + 1, (posInRam.X * 7) + 2);
+	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &numInRam, reg);
+	ram.showNumInRam(numInRam);
+	mt_setbgcolor(mt::Black);
+	bc_printBigNumber(numInRam, { 1, 13 });
+	mt_gotoXY(22, 0);
 	return 0;
 }

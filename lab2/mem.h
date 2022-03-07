@@ -39,6 +39,7 @@ public:
 	int sc_memoryLoad(std::string filename);
 
 	int showRam(Flag &reg);
+	int showNumInRam(int num);
 
 };
 

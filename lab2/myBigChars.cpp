@@ -76,16 +76,31 @@ int MyTerm::bc_setBigCharPos(bigNum &bigN, COORD pos, int val) {
 }
 
 int MyTerm::bc_bigCharRead(std::string filename, int count) {
-	FILE* data;
-	int res;
-	data = fopen(filename.c_str(), "r");
-	if (data == NULL)
-		return 1;
+
+	std::ifstream data(filename, std::ios::binary);
+	if (!data.is_open())
+		throw "Error: file not open";
 	for (int i = 0; i < count; i++) {
-		std::cout << "AAAA";
-		fread((void*)bn[i].first, sizeof(unsigned int), 1, data);
-		fread((void*)bn[i].first, sizeof(unsigned int), 1, data);
-		//std::cout << bn[i].first << " " << bn[i].second;
+
+		data >> bn[i].first;
+		data >> bn[i].second;
 	}
-	fclose(data);
+	return 0;
+}
+
+int MyTerm::bc_printBigNumber(int num, COORD start, mt::colors font, mt::colors bg) {
+
+	if (num >= 0)
+		bc_printBigChar(16, start, font, bg);
+	else
+		bc_printBigChar(17, start, font, bg);
+	num = abs(num);
+	start.X += 9;
+	for (int hexDegree = 0x1000; hexDegree != 0; hexDegree /= 16) {
+		bc_printBigChar(num / hexDegree, start, font, bg);
+		start.X += 9;
+		//printf("%x", num / hexDegree);
+		num %= hexDegree;
+	}
+	return 0;
 }

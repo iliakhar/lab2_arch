@@ -65,17 +65,22 @@ int Ram::showRam(Flag &reg) {
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
             sc_memoryGet(i * 10 + j, &cell, reg);
-            if (cell < 0) std::cout << "-";
-            else std::cout << "+";
-            if (cell != 0)
-                emptyDigits = 4 - log10(abs(cell));
-            else emptyDigits = 3;
-            for (int k = 0; k < emptyDigits; k++)
-                std::cout << 0;
-            std::cout << abs(cell) << "  ";
-
+            showNumInRam(cell);
+            std::cout << "  ";
         }
         std::cout << "\n  ";
+    }
+    return 0;
+}
+
+int Ram::showNumInRam(int num) {
+
+    if (num < 0) std::cout << "-";
+    else std::cout << "+";
+    num = abs(num);
+    for (int decDegree = 0x1000; decDegree != 0; decDegree /= 16) {
+        printf("%x", num / decDegree);
+        num %= decDegree;
     }
     return 0;
 }
