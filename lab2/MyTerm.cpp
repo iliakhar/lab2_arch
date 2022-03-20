@@ -49,7 +49,6 @@ int MyTerm::showTerm() {
 	mt_gotoXY(82, 10);
 	reg.showFlags();
 
-
 	FILE* data;
 	int res;
 	char ch[30];
@@ -80,17 +79,26 @@ int MyTerm::runTerm() {
 	showTerm();
 	posInRam = { 1, 0 };
 	ramPosMove(-1);
-	char key;
+	rk::keys key;
+	//rk_myTermRegime(false, 2, 5, true, 4);
 	while (1) {
-		key = getch();
-		if (key == 0 || key == 224)
-			key = getch();
+		if (termInfo.canon)
+			rk_readKeyCin(&key);
+		else
+			rk_readKeyGetch(&key);
+		mt_gotoXY(0, 22);
+		for (int i = 0; i < 20; i++)
+			std::cout << " ";
+		mt_gotoXY(0, 22);
 		switch (key) {
-		case 75: ramPosMove(-1);
+		case rk::Left: ramPosMove(-1);
 			break;
-		case 77: ramPosMove(1);
+		case rk::Right: ramPosMove(1);
 			break;
-		case 'e':return 0;
+		case rk::Save: rk_myTermSave();
+			break;
+		case rk::Load: rk_myTermRestore();
+			break;
 		default: break;
 		}
 	}

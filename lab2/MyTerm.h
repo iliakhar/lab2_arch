@@ -4,28 +4,37 @@
 #include<utility>
 #include<fstream>
 #include<conio.h>
+#include<ctime>
+#include<map>
 #include"mem.h"
 using bigNum = std::pair<unsigned int, unsigned int>;
 namespace mt {
     enum colors {
-        Black,
-        Blue,
-        Green,
-        Cyan,
-        Red,
-        Magenta,
-        Brown,
-        LightGray,
-        DarkGray,
-        LightBlue,
-        LightGreen,
-        LightCyan,
-        LightRed,
-        LightMagenta,
-        Yellow,
-        White
+        Black,  Blue,   Green,
+        Cyan,   Red,     Magenta,
+        Brown,  LightGray,  DarkGray,
+        LightBlue,  LightGreen, LightCyan,
+        LightRed,   LightMagenta,
+        Yellow, White
     };
 }
+
+namespace rk {
+    enum keys {
+        Load, Save, Run,
+        Step, Reset, Accumulator,
+        InstructionCounter, ERR,
+        Right,  Left
+    };
+}
+
+struct MyTermInfo {
+    bool canon;
+    double vtime;
+    int vmin;
+    bool echo;
+    bool sigint;
+};
 
 class PseudoGraphics {
     bigNum bn[18];
@@ -48,14 +57,26 @@ class MyTerm {
     PseudoGraphics termGraphics;
     Ram ram;
     Flag reg;
+    MyTermInfo termInfo;
+    std::map<std::string, rk::keys> keyMap = {
+        {"l", rk::Load}, {"s", rk::Save}
+    };
     int showTerm();
+    int rk_readKeyGetch(rk::keys* key);
+    int rk_readKeyCin(rk::keys* key);
+    int rk_myTermRegime(bool canon) { termInfo.canon = canon; return 0; };
+    int rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint);
+    int rk_myTermSave();
+    int rk_myTermRestore();
+
 public:
     MyTerm() :posInRam({ 0 ,0 }) {
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &inf);
-        ShowCursor(false);
+        rk_myTermRestore();
         ram.sc_memoryLoad("ram.txt");
         ram.sc_memorySet(100, 678, reg);
-        mt_setCursorVisible(false);
+        if(!termInfo.echo)
+            mt_setCursorVisible(false);
     }
 
     static int mt_clrscr();
