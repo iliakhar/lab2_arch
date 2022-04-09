@@ -15,7 +15,7 @@ int MyTerm::rk_readKeyGetch(rk::keys* key) {
 	case 77: *key = rk::Right;
 		return 0;
 	}
-	if (termInfo.echo)
+	if (termInfo.echo && newKey[0] != 63)
 		std::cout << newKey[0];
 	clock_t start = clock();
 	while ((double)(clock() - start) / CLOCKS_PER_SEC < termInfo.vtime && symbCount < termInfo.vmin - 1) {
@@ -33,7 +33,7 @@ int MyTerm::rk_readKeyGetch(rk::keys* key) {
 		}
 	}
 	if(symbCount == termInfo.vmin - 1)
-		Sleep(termInfo.vtime * 1000);
+		Sleep(500);
 	auto it = keyMap.find(newKey);
 	if (it != keyMap.end())
 		*key = it->second;
@@ -54,6 +54,7 @@ int MyTerm::rk_readKeyCin(rk::keys* key) {
 int MyTerm::rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint) {
 	termInfo.canon = canon;
 	termInfo.vtime = vtime;
+	mt_setCursorVisible(termInfo.echo);
 	termInfo.vmin = vmin;
 	termInfo.sigint = sigint;
 	return 0;
@@ -74,6 +75,18 @@ int MyTerm::rk_myTermRestore() {
 	if (!file.is_open())
 		throw "Error Error Error Error ))";
 	file.read((char*)&termInfo, sizeof(termInfo));
+	mt_setCursorVisible(termInfo.echo);
 	file.close();
+	return 0;
+}
+
+int MyTerm::rk_writeAccum(int val) {
+	
+	mt_gotoXY(84, 1);
+	//int val;
+	//ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &val, reg);
+	ram.showNumInRam(val);
+	mt_gotoXY(0, 22);
+
 	return 0;
 }

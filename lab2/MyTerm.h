@@ -6,6 +6,9 @@
 #include<conio.h>
 #include<ctime>
 #include<map>
+#include <future>
+#include <csignal>
+#include <functional>
 #include"mem.h"
 using bigNum = std::pair<unsigned int, unsigned int>;
 namespace mt {
@@ -24,16 +27,16 @@ namespace rk {
         Load, Save, Run,
         Step, Reset, Accumulator,
         InstructionCounter, ERR,
-        Right,  Left
+        Right,  Left, F5
     };
 }
 
 struct MyTermInfo {
-    bool canon;
-    double vtime;
-    int vmin;
-    bool echo;
-    bool sigint;
+    bool canon = false;
+    double vtime = 0.7;
+    int vmin = 3;
+    bool echo = true;
+    bool sigint = 1;
 };
 
 class PseudoGraphics {
@@ -57,9 +60,10 @@ class MyTerm {
     PseudoGraphics termGraphics;
     Ram ram;
     Flag reg;
+    bool isAsync = false;
     MyTermInfo termInfo;
     std::map<std::string, rk::keys> keyMap = {
-        {"l", rk::Load}, {"s", rk::Save}
+        {"r", rk::Load}, {"s", rk::Save},{"i", rk::Reset}, {std::string(1, 63), rk::F5}
     };
     int showTerm();
     int rk_readKeyGetch(rk::keys* key);
@@ -68,15 +72,27 @@ class MyTerm {
     int rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint);
     int rk_myTermSave();
     int rk_myTermRestore();
+    int rk_writeAccum(int val);
+    void Timer(int time);
+    int clearRamNum();
 
 public:
-    MyTerm() :posInRam({ 0 ,0 }) {
+    MyTerm() : posInRam({ 0 ,0 }) {
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &inf);
-        rk_myTermRestore();
+        //rk_myTermRestore();
+        //auto f = BackPosToBeg;
+        //signal(100, f);
+        //reg.sc_regSet(T, 1);
         ram.sc_memoryLoad("ram.txt");
         ram.sc_memorySet(100, 678, reg);
         if(!termInfo.echo)
             mt_setCursorVisible(false);
+    }
+
+    void BackPosToBeg(int a) {
+        clearRamNum();
+        posInRam = { 1, 0 };
+        ramPosMove(-1);
     }
 
     static int mt_clrscr();
@@ -88,5 +104,8 @@ public:
     int runTerm();
     int ramPosMove(int move);
 };
+
+
+//void PsevdoBackPosToBeg(MyTerm& trm);
 
 

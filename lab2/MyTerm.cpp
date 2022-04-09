@@ -15,6 +15,8 @@ int MyTerm::mt_gotoXY(short x, short y) {
 	return 0;
 }
 
+
+
 int MyTerm::mt_getscreensize(int* rows, int* cols) {
 	*rows = inf.srWindow.Bottom + 1;
 	*cols = inf.srWindow.Right + 1;
@@ -81,36 +83,83 @@ int MyTerm::runTerm() {
 	ramPosMove(-1);
 	rk::keys key;
 	//rk_myTermRegime(false, 2, 5, true, 4);
+	auto f = std::async(std::launch::async, &MyTerm::Timer, this, 3000);
 	while (1) {
+		mt_gotoXY(86, 4);
+		std::cout << "  ";
+		mt_gotoXY(86, 4);
+		std::cout << posInRam.X + posInRam.Y * 10;
+		mt_gotoXY(0, 22);
+
 		if (termInfo.canon)
 			rk_readKeyCin(&key);
 		else
 			rk_readKeyGetch(&key);
+		
+		switch (key) {
+		case rk::Left: 
+			isAsync = false;
+			ramPosMove(-1);
+			isAsync = true;
+			break;
+		case rk::Right: 
+			isAsync = false;
+			ramPosMove(1);
+			isAsync = true;;
+			break;
+		case rk::Save: rk_myTermSave();
+			break;
+		case rk::Reset: //BackPosToBeg(2);
+			int val;
+			reg.sc_regGet(T, &val);
+			reg.sc_regSet(T, val==1?0:1);
+			
+			break;
+		case rk::Load: rk_myTermRestore();
+			break;
+		case rk::F5: {
+			int val;
+			std::cin >> val;
+			rk_writeAccum(val);
+			break;
+		}
+		default: break;
+		}
 		mt_gotoXY(0, 22);
 		for (int i = 0; i < 20; i++)
 			std::cout << " ";
 		mt_gotoXY(0, 22);
-		switch (key) {
-		case rk::Left: ramPosMove(-1);
-			break;
-		case rk::Right: ramPosMove(1);
-			break;
-		case rk::Save: rk_myTermSave();
-			break;
-		case rk::Load: rk_myTermRestore();
-			break;
-		default: break;
-		}
 	}
 	return 0;
 }
 
-int MyTerm::ramPosMove(int move) {
+void MyTerm::Timer(int time) {
+	int val;
+	while (1) {
+		Sleep(time);
+		reg.sc_regGet(T, &val);
+		if (val == 0) {
+			ramPosMove(1);
+			mt_gotoXY(86, 4);
+			std::cout << "  ";
+			mt_gotoXY(86, 4);
+			std::cout << posInRam.X + posInRam.Y * 10;
+			mt_gotoXY(0, 22);
+		}
+	}
+}
 
+int MyTerm::clearRamNum() {
 	int numInRam;
 	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &numInRam, reg);
 	mt_gotoXY((posInRam.X * 7) + 2, posInRam.Y + 1);
 	ram.showNumInRam(numInRam);
+	return numInRam;
+}
+
+int MyTerm::ramPosMove(int move) {
+
+	int numInRam = clearRamNum();
 	mt_setbgcolor(mt::LightMagenta);
 	int border = 9, incr = 1;
 	if (move < 0) {
@@ -128,6 +177,7 @@ int MyTerm::ramPosMove(int move) {
 	ram.showNumInRam(numInRam);
 	mt_setbgcolor(mt::Black);
 	termGraphics.bc_printBigNumber(numInRam, { 1, 13 });
+	
 	mt_gotoXY(0, 22);
 	return 0;
 }
