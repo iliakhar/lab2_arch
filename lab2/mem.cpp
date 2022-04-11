@@ -74,7 +74,7 @@ int Ram::showRam(Flag &reg) {
 }
 
 int Ram::showNumInRam(int num) {
-
+    m.lock();
     if (num < 0) std::cout << "-";
     else std::cout << "+";
     num = abs(num);
@@ -82,5 +82,6 @@ int Ram::showNumInRam(int num) {
         printf("%x", num / decDegree);
         num %= decDegree;
     }
+    m.unlock();
     return 0;
 }

@@ -83,52 +83,55 @@ int MyTerm::runTerm() {
 	ramPosMove(-1);
 	rk::keys key;
 	//rk_myTermRegime(false, 2, 5, true, 4);
+	rk_writeAccum("0");
 	auto f = std::async(std::launch::async, &MyTerm::Timer, this, 3000);
 	while (1) {
-		mt_gotoXY(86, 4);
-		std::cout << "  ";
-		mt_gotoXY(86, 4);
-		std::cout << posInRam.X + posInRam.Y * 10;
-		mt_gotoXY(0, 22);
-
-		if (termInfo.canon)
+		printCounter();
+		/*if (termInfo.canon)
 			rk_readKeyCin(&key);
-		else
-			rk_readKeyGetch(&key);
+		else*/
+			rk_readKeyGetch(&key, termInfo.canon);
 		
 		switch (key) {
 		case rk::Left: 
-			isAsync = false;
 			ramPosMove(-1);
-			isAsync = true;
 			break;
-		case rk::Right: 
-			isAsync = false;
+		case rk::Right:
 			ramPosMove(1);
-			isAsync = true;;
 			break;
 		case rk::Save: rk_myTermSave();
 			break;
-		case rk::Reset: //BackPosToBeg(2);
+		case rk::Reset: BackPosToBeg();
+			break;
+		case rk::Step:
 			int val;
 			reg.sc_regGet(T, &val);
-			reg.sc_regSet(T, val==1?0:1);
-			
+			val = val == 1 ? 0 : 1;
+			reg.sc_regSet(T, val);
+
 			break;
 		case rk::Load: rk_myTermRestore();
 			break;
 		case rk::F5: {
-			int val;
-			std::cin >> val;
-			rk_writeAccum(val);
+			muteAsync.lock();
+			mt_gotoXY(0, 22);
+			for (int i = 0; i < 20; i++)
+				std::cout << " ";
+			mt_gotoXY(0, 22);
+			muteAsync.unlock();
+			rk_writeAccum(rk_readKeyGetch(&key, true));
+			
+			
 			break;
 		}
 		default: break;
 		}
+		muteAsync.lock();
 		mt_gotoXY(0, 22);
 		for (int i = 0; i < 20; i++)
 			std::cout << " ";
 		mt_gotoXY(0, 22);
+		muteAsync.unlock();
 	}
 	return 0;
 }
@@ -136,15 +139,12 @@ int MyTerm::runTerm() {
 void MyTerm::Timer(int time) {
 	int val;
 	while (1) {
+		
 		Sleep(time);
 		reg.sc_regGet(T, &val);
 		if (val == 0) {
 			ramPosMove(1);
-			mt_gotoXY(86, 4);
-			std::cout << "  ";
-			mt_gotoXY(86, 4);
-			std::cout << posInRam.X + posInRam.Y * 10;
-			mt_gotoXY(0, 22);
+			printCounter();
 		}
 	}
 }
@@ -158,7 +158,7 @@ int MyTerm::clearRamNum() {
 }
 
 int MyTerm::ramPosMove(int move) {
-
+	muteAsync.lock();
 	int numInRam = clearRamNum();
 	mt_setbgcolor(mt::LightMagenta);
 	int border = 9, incr = 1;
@@ -179,5 +179,17 @@ int MyTerm::ramPosMove(int move) {
 	termGraphics.bc_printBigNumber(numInRam, { 1, 13 });
 	
 	mt_gotoXY(0, 22);
+	muteAsync.unlock();
 	return 0;
+}
+
+void MyTerm::printCounter() {
+	muteAsync.lock();
+	
+	mt_gotoXY(86, 4);
+	std::cout << "  ";
+	mt_gotoXY(86, 4);
+	std::cout << posInRam.X + posInRam.Y * 10;
+	mt_gotoXY(0, 22);
+	muteAsync.unlock();
 }

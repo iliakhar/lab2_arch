@@ -9,6 +9,7 @@
 #include <future>
 #include <csignal>
 #include <functional>
+#include <mutex>
 #include"mem.h"
 using bigNum = std::pair<unsigned int, unsigned int>;
 namespace mt {
@@ -33,8 +34,8 @@ namespace rk {
 
 struct MyTermInfo {
     bool canon = false;
-    double vtime = 0.7;
-    int vmin = 3;
+    double vtime = 1;
+    int vmin = 5;
     bool echo = true;
     bool sigint = 1;
 };
@@ -60,21 +61,26 @@ class MyTerm {
     PseudoGraphics termGraphics;
     Ram ram;
     Flag reg;
-    bool isAsync = false;
+    int accum = 0;
+    std::recursive_mutex muteAsync;
     MyTermInfo termInfo;
     std::map<std::string, rk::keys> keyMap = {
-        {"r", rk::Load}, {"s", rk::Save},{"i", rk::Reset}, {std::string(1, 63), rk::F5}
+        {"r", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"t", rk::Step}, {std::string(1, 63), rk::F5}
     };
     int showTerm();
-    int rk_readKeyGetch(rk::keys* key);
+    std::string rk_readKeyGetch(rk::keys* key, bool isAutoEnter);
     int rk_readKeyCin(rk::keys* key);
     int rk_myTermRegime(bool canon) { termInfo.canon = canon; return 0; };
     int rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint);
     int rk_myTermSave();
     int rk_myTermRestore();
-    int rk_writeAccum(int val);
+    int rk_writeAccum(std::string val);
     void Timer(int time);
     int clearRamNum();
+    void printCounter();
+    bool getchCanon(clock_t start, int symbCount) { return true; }
+    bool getchNotCanon(clock_t start, int symbCount) { return (double)(clock() - start) / CLOCKS_PER_SEC < termInfo.vtime&& symbCount < termInfo.vmin - 1; }
+
 
 public:
     MyTerm() : posInRam({ 0 ,0 }) {
@@ -89,10 +95,13 @@ public:
             mt_setCursorVisible(false);
     }
 
-    void BackPosToBeg(int a) {
+    void BackPosToBeg() {
+        muteAsync.lock();
         clearRamNum();
         posInRam = { 1, 0 };
         ramPosMove(-1);
+        rk_writeAccum("0");
+        muteAsync.unlock();
     }
 
     static int mt_clrscr();

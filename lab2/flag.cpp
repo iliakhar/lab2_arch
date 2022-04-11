@@ -11,7 +11,7 @@ int Flag::sc_regSet(int reg, int value) {
     if (value == 1)
         flag |= reg;
     else
-        flag |= ~reg;
+        flag &= ~reg;//////////////
     return 0;
 }
 

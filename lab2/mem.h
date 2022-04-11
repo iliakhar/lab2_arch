@@ -1,6 +1,7 @@
 #pragma once
 #pragma warning(disable : 4996)
 #include<string>
+#include <mutex>
 #include <iostream>
 
 
@@ -28,6 +29,7 @@ public:
 class Ram {
 	int arr[100];
 	//Flag reg;
+	std::mutex m;
 public:
 	Ram() {
 		sc_memoryInit();
