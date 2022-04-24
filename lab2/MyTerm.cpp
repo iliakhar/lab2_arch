@@ -1,54 +1,19 @@
 #include"MyTerm.h"
 #include<iostream>
 
-HANDLE MyTerm::hConsole(GetStdHandle(STD_OUTPUT_HANDLE));
-CONSOLE_SCREEN_BUFFER_INFO MyTerm::inf;
-
-int MyTerm::mt_clrscr() {
-
-	system("cls");
-	return 0;
-}
-
-int MyTerm::mt_gotoXY(short x, short y) {
-	SetConsoleCursorPosition(hConsole, {x, y});
-	return 0;
-}
-
-
-
-int MyTerm::mt_getscreensize(int* rows, int* cols) {
-	*rows = inf.srWindow.Bottom + 1;
-	*cols = inf.srWindow.Right + 1;
-
-	return 0;
-}
-
-int MyTerm::mt_setfgcolor(enum mt::colors cl) {
-	GetConsoleScreenBufferInfo(hConsole, &inf);
-	SetConsoleTextAttribute(hConsole, (inf.wAttributes & 0b11110000)|cl);
-	return 0;
-}
-
-int MyTerm::mt_setbgcolor(enum mt::colors cl) {
-	GetConsoleScreenBufferInfo(hConsole, &inf);
-	SetConsoleTextAttribute(hConsole, (cl << 4)|(inf.wAttributes & 0b1111));
-	return 0;
-}
-
-int MyTerm::mt_setCursorVisible(bool visible) {
-
-	CONSOLE_CURSOR_INFO cursorInfo;
-	GetConsoleCursorInfo(hConsole, &cursorInfo);
-	cursorInfo.bVisible = visible;
-	SetConsoleCursorInfo(hConsole, &cursorInfo);
-	return 0;
+void MyTerm::clearLine(int symbCount, int lineNumber) {
+	mt.gotoXY(0, lineNumber);
+	for (int i = 0; i < symbCount; i++)
+		std::cout << " ";
+	mt.gotoXY(0, lineNumber);
 }
 
 int MyTerm::showTerm() {
 
 	ram.showRam(reg);
-	mt_gotoXY(82, 10);
+	mt.gotoXY(82, 7);
+	oper.ShowCommandAndOperand(118<<7, reg);
+	mt.gotoXY(82, 10);
 	reg.showFlags();
 
 	FILE* data;
@@ -59,7 +24,7 @@ int MyTerm::showTerm() {
 		return 1;
 	short strNumb = 13;
 	while (fgets(ch, 29, data)) {
-		mt_gotoXY(50, strNumb);
+		mt.gotoXY(50, strNumb);
 		std::cout << " " << ch;
 		strNumb++;
 	}
@@ -82,55 +47,62 @@ int MyTerm::runTerm() {
 	posInRam = { 1, 0 };
 	ramPosMove(-1);
 	rk::keys key;
-	//rk_myTermRegime(false, 2, 5, true, 4);
 	rk_writeAccum("0");
-	auto f = std::async(std::launch::async, &MyTerm::Timer, this, 3000);
+	auto f = std::async(std::launch::async, &MyTerm::Timer, this, 1500);
 	while (1) {
 		printCounter();
-		/*if (termInfo.canon)
-			rk_readKeyCin(&key);
-		else*/
-			rk_readKeyGetch(&key, termInfo.canon);
-		
-		switch (key) {
-		case rk::Left: 
-			ramPosMove(-1);
-			break;
-		case rk::Right:
-			ramPosMove(1);
-			break;
-		case rk::Save: rk_myTermSave();
-			break;
-		case rk::Reset: BackPosToBeg();
-			break;
-		case rk::Step:
-			int val;
-			reg.sc_regGet(T, &val);
-			val = val == 1 ? 0 : 1;
-			reg.sc_regSet(T, val);
+		rk_readKeyGetch(&key, termInfo.canon);
+		int regTval;
+		reg.sc_regGet(T, &regTval);
 
-			break;
-		case rk::Load: rk_myTermRestore();
-			break;
-		case rk::F5: {
-			muteAsync.lock();
-			mt_gotoXY(0, 22);
-			for (int i = 0; i < 20; i++)
-				std::cout << " ";
-			mt_gotoXY(0, 22);
-			muteAsync.unlock();
-			rk_writeAccum(rk_readKeyGetch(&key, true));
-			
-			
-			break;
-		}
-		default: break;
-		}
+		if(regTval == 1)
+			switch (key) {
+			case rk::Left: 
+				ramPosMove(-1);
+				break;
+			case rk::Right:
+				ramPosMove(1);
+				break;
+			case rk::Save: rk_myTermSave();
+				break;
+			case rk::Reset: SetPosInRam(0, 0);
+				rk_writeAccum("0");
+				reg.sc_regInit();
+				break;
+			case rk::Step:
+				reg.sc_regSet(T, 0);
+				break;
+			case rk::Load: rk_myTermRestore();
+				break;
+			case rk::F5: {
+				muteAsync.lock();
+				clearLine(40, 22);
+				muteAsync.unlock();
+				rk_writeAccum(rk_readKeyGetch(&key, true));
+				break;
+			}
+			case rk::F6: {
+				muteAsync.lock();
+				clearLine(40, 22);
+				muteAsync.unlock();
+				try {
+					int newRamPos = stoi(rk_readKeyGetch(&key, true));
+					if (newRamPos >= 0 && newRamPos < 100)
+						SetPosInRam(newRamPos % 10, newRamPos / 10);
+					else
+						reg.sc_regSet(M, 1);
+				}
+				catch(...){}
+				break;
+			}
+			default: break;
+			}
+		else if(key == rk::Step)
+			reg.sc_regSet(T, 1);
 		muteAsync.lock();
-		mt_gotoXY(0, 22);
-		for (int i = 0; i < 20; i++)
-			std::cout << " ";
-		mt_gotoXY(0, 22);
+		mt.gotoXY(82, 10);
+		reg.showFlags();
+		clearLine(40, 22);
 		muteAsync.unlock();
 	}
 	return 0;
@@ -152,7 +124,7 @@ void MyTerm::Timer(int time) {
 int MyTerm::clearRamNum() {
 	int numInRam;
 	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &numInRam, reg);
-	mt_gotoXY((posInRam.X * 7) + 2, posInRam.Y + 1);
+	mt.gotoXY((posInRam.X * 7) + 2, posInRam.Y + 1);
 	ram.showNumInRam(numInRam);
 	return numInRam;
 }
@@ -160,7 +132,7 @@ int MyTerm::clearRamNum() {
 int MyTerm::ramPosMove(int move) {
 	muteAsync.lock();
 	int numInRam = clearRamNum();
-	mt_setbgcolor(mt::LightMagenta);
+	mt.setbgcolor(mt::LightMagenta);
 	int border = 9, incr = 1;
 	if (move < 0) {
 		border = 0;
@@ -172,13 +144,13 @@ int MyTerm::ramPosMove(int move) {
 			posInRam.Y += incr;
 		}
 		else posInRam.X += incr;
-	mt_gotoXY((posInRam.X * 7) + 2, posInRam.Y + 1);
+	mt.gotoXY((posInRam.X * 7) + 2, posInRam.Y + 1);
 	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &numInRam, reg);
 	ram.showNumInRam(numInRam);
-	mt_setbgcolor(mt::Black);
+	mt.setbgcolor(mt::Black);
 	termGraphics.bc_printBigNumber(numInRam, { 1, 13 });
 	
-	mt_gotoXY(0, 22);
+	mt.gotoXY(0, 22);
 	muteAsync.unlock();
 	return 0;
 }
@@ -186,10 +158,28 @@ int MyTerm::ramPosMove(int move) {
 void MyTerm::printCounter() {
 	muteAsync.lock();
 	
-	mt_gotoXY(86, 4);
+	mt.gotoXY(86, 4);
 	std::cout << "  ";
-	mt_gotoXY(86, 4);
+	mt.gotoXY(86, 4);
 	std::cout << posInRam.X + posInRam.Y * 10;
-	mt_gotoXY(0, 22);
+	mt.gotoXY(0, 22);
+	muteAsync.unlock();
+}
+
+void MyTerm::SetPosInRam(short x, short y) {
+	muteAsync.lock();
+	clearRamNum();
+	if (!(y >= 0 && y < 10 && x >= 0 && x < 10)) {
+		muteAsync.unlock();
+		return;
+	}
+	if (x >= 0 && x < 9) {
+		posInRam = { short(x + 1), y };
+		ramPosMove(-1);
+	}
+	else if (x == 9) {
+		posInRam = { short(x - 1), y };
+		ramPosMove(1);
+	}
 	muteAsync.unlock();
 }

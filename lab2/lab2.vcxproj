@@ -146,6 +146,7 @@
     <ClCompile Include="MyTerm.cpp" />
     <ClCompile Include="operations.cpp" />
     <ClCompile Include="ReadKey.cpp" />
+    <ClCompile Include="TermVisual.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mem.h" />

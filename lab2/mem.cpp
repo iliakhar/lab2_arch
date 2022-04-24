@@ -74,6 +74,7 @@ int Ram::showRam(Flag &reg) {
 }
 
 int Ram::showNumInRam(int num) {
+    if (abs(num) > 0xFFFF) num = 0;
     m.lock();
     if (num < 0) std::cout << "-";
     else std::cout << "+";
@@ -84,4 +85,23 @@ int Ram::showNumInRam(int num) {
     }
     m.unlock();
     return 0;
+}
+
+void Operation::ShowCommandAndOperand(int value, Flag &reg) {
+    int com, oper;
+    sc_commandDecode(value, &com, &oper, reg);
+    m.lock();
+    if (com < 0) std::cout << "-";
+    else std::cout << "+";
+    com = abs(com);
+    for (int decDegree = 0x10; decDegree != 0; decDegree /= 16) {
+        printf("%x", com / decDegree);
+        com %= decDegree;
+    }
+    std::cout << " : ";
+    for (int decDegree = 0x10; decDegree != 0; decDegree /= 16) {
+        printf("%x", com / decDegree);
+        com %= decDegree;
+    }
+    m.unlock();
 }

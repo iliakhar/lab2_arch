@@ -22,7 +22,7 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 	case 77: *key = rk::Right;
 		return "";
 	}
-	if (newKey[0] != 63) {
+	if (newKey[0] != 63 && newKey[0] != 64) {
 		symbCount++;
 		if (termInfo.echo) {
 			muteAsync.lock();
@@ -30,11 +30,12 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 			muteAsync.unlock();
 		}
 	}
-	else if (newKey[0] == 63) {
+	else if (newKey[0] == 63 || newKey[0] == 64) {
 		symbCount++;
 		if (termInfo.echo) {
 			muteAsync.lock();
-			std::cout << "!";
+			if(newKey[0] == 63) std::cout << "!";
+			else std::cout << "@";
 			muteAsync.unlock();
 		}
 	}
@@ -53,9 +54,9 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 				if (termInfo.echo) {
 					muteAsync.lock();
 					//if (pos != 0)pos--;
-					mt_gotoXY(0 + symbCount, 22);
+					mt.gotoXY(0 + symbCount, 22);
 					std::cout << " ";
-					mt_gotoXY(0 + symbCount, 22);
+					mt.gotoXY(0 + symbCount, 22);
 					muteAsync.unlock();
 					start = clock();
 				}
@@ -63,14 +64,14 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 			}
 			if (ch == 0 || ch == -32 || ch == 224) {
 				ch = getch();
-				if (ch == 63) {
-					
+				if (ch == 63 || ch == 64) {
 					newKey.push_back(ch);
 					if (termInfo.echo) {
 						muteAsync.lock();
-						mt_gotoXY(0 + symbCount, 22);
-						std::cout << "!";
-						mt_gotoXY(0 + symbCount, 22);
+						mt.gotoXY(0 + symbCount, 22);
+						if(ch == 63) std::cout << "!";
+						else std::cout << "@";
+						mt.gotoXY(0 + symbCount, 22);
 						muteAsync.unlock();
 					}
 					symbCount++;
@@ -82,7 +83,7 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 				
 				if (termInfo.echo) {
 					muteAsync.lock();
-					mt_gotoXY(0 + symbCount, 22);
+					mt.gotoXY(0 + symbCount, 22);
 					std::cout << newKey[symbCount];
 					muteAsync.unlock();
 					start = clock();
@@ -92,7 +93,7 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 			while (_kbhit())getch();
 		}
 	}
-	if(symbCount == termInfo.vmin - 1)
+	if(symbCount == termInfo.vmin)
 		Sleep(500);
 	auto it = keyMap.find(newKey);
 	if (it != keyMap.end())
@@ -102,20 +103,10 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 	return newKey;
 }
 
-int MyTerm::rk_readKeyCin(rk::keys* key) {
-	std::string newKey;
-	std::cin >> newKey;
-	auto it = keyMap.find(newKey);
-	if (it != keyMap.end())
-		*key = it->second;
-	else *key = rk::ERR;
-	return 0;
-}
-
 int MyTerm::rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint) {
 	termInfo.canon = canon;
 	termInfo.vtime = vtime;
-	mt_setCursorVisible(termInfo.echo);
+	mt.setCursorVisible(termInfo.echo);
 	termInfo.vmin = vmin;
 	termInfo.sigint = sigint;
 	return 0;
@@ -136,27 +127,22 @@ int MyTerm::rk_myTermRestore() {
 	if (!file.is_open())
 		throw "Error Error Error Error ))";
 	file.read((char*)&termInfo, sizeof(termInfo));
-	mt_setCursorVisible(termInfo.echo);
+	mt.setCursorVisible(termInfo.echo);
 	file.close();
 	return 0;
 }
 
 int MyTerm::rk_writeAccum(std::string val) {
 	
-	mt_gotoXY(84, 1);
-	//int val;
-	//ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &val, reg);
+	mt.gotoXY(84, 1);
 	try{
 		int a = std::stoi(val);
 		accum = a;
 		ram.showNumInRam(a);
-		
 	}
 	catch (...) {
 
 	}
-	mt_gotoXY(0, 22);
-	
-
+	mt.gotoXY(0, 22);
 	return 0;
 }

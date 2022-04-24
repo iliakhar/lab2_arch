@@ -1,7 +1,7 @@
 #include "MyTerm.h"
 
 int PseudoGraphics::bc_box(COORD start, COORD size, std::string frameName) {
-	MyTerm::mt_gotoXY(start.X, start.Y);
+	termVis->gotoXY(start.X, start.Y);
 	char ch[7] = { -65,-64,-38,-39,-77,-60 };//пр¬,лЌ,л¬,прЌ,верт,гор
 	std::cout << ch[2];
 	int halfLen = (size.X - frameName.size()) / 2;
@@ -12,18 +12,18 @@ int PseudoGraphics::bc_box(COORD start, COORD size, std::string frameName) {
 		std::cout << ch[5];
 	std::cout << ch[0];
 	for (int i = 0; i < size.Y - 2; i++) {
-		MyTerm::mt_gotoXY(start.X, start.Y + 1 + i);
+		termVis->gotoXY(start.X, start.Y + 1 + i);
 		std::cout << ch[4];
 	}
-	MyTerm::mt_gotoXY(start.X, start.Y + size.Y - 1);
+	termVis->gotoXY(start.X, start.Y + size.Y - 1);
 	std::cout << ch[1];
 	for (int i = 0; i < size.X - 2; i++)
 		std::cout << ch[5];
 	for (int i = 0; i < size.Y - 2; i++) {
-		MyTerm::mt_gotoXY(start.X + size.X - 1, start.Y + 1 + i);
+		termVis->gotoXY(start.X + size.X - 1, start.Y + 1 + i);
 		std::cout << ch[4];
 	}
-	MyTerm::mt_gotoXY(start.X + size.X - 1, start.Y + size.Y - 1);
+	termVis->gotoXY(start.X + size.X - 1, start.Y + size.Y - 1);
 	std::cout << ch[3];
 	return 0;
 }
@@ -33,20 +33,20 @@ int PseudoGraphics::bc_printBigChar(int num, COORD start, mt::colors font, mt::c
 	char symb, ch = -78;
 	int val;
 	std::string str;
-	MyTerm::mt_setfgcolor(font);
-	MyTerm::mt_setbgcolor(bg);
+	termVis->setfgcolor(font);
+	termVis->setbgcolor(bg);
 
-	MyTerm::mt_gotoXY(start.X, start.Y);
+	termVis->gotoXY(start.X, start.Y);
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
 			bc_getBigCharPos(bn[num], { (short)j, (short)i }, val);
 			symb = val ? ch : ' ';
 			std::cout << symb;
 		}
-		MyTerm::mt_gotoXY(start.X, start.Y + i + 1);
+		termVis->gotoXY(start.X, start.Y + i + 1);
 	}
-	MyTerm::mt_setfgcolor(mt::LightGray);
-	MyTerm::mt_setbgcolor(mt::Black);
+	termVis->setfgcolor(mt::LightGray);
+	termVis->setbgcolor(mt::Black);
 	return 0;
 }
 

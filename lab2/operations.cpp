@@ -29,12 +29,17 @@ int Operation::sc_commandDecode(int value, int* command, int* operand, Flag& reg
 		return 1;
 	tmp_comm = (value >> 7) & 0x7F;
 	tmp_oper = value & 0x7F;
-	if (searchInOper(tmp_comm)) {
+	if (searchInOper(tmp_comm))
 		*command = tmp_comm;
-		*operand = tmp_oper;
-	}
 	else {
 		reg.sc_regSet(E, 1);
+		return 1;
+	}
+	if (tmp_oper>=0 && tmp_oper <100)
+		*operand = tmp_oper;
+	else {
+		*operand = 0;
+		reg.sc_regSet(M, 1);
 		return 1;
 	}
 	return 0;

@@ -57,8 +57,10 @@ class Operation {
 		0x69, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76
 	};
 	int searchInOper(int command);
+	std::mutex m;
 public:
 	Operation() :size(39) {};
 	int sc_commandEncode(int command, int operand, int* value, Flag& reg);
 	int sc_commandDecode(int value, int* command, int* operand, Flag& reg);
+	void ShowCommandAndOperand(int value, Flag& reg);
 };

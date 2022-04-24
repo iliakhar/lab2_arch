@@ -28,22 +28,38 @@ namespace rk {
         Load, Save, Run,
         Step, Reset, Accumulator,
         InstructionCounter, ERR,
-        Right,  Left, F5
+        Right,  Left, F5, F6
     };
 }
 
 struct MyTermInfo {
     bool canon = false;
-    double vtime = 1;
+    double vtime = 0.8;
     int vmin = 5;
     bool echo = true;
     bool sigint = 1;
 };
 
+class TermVisual {
+    HANDLE hConsole;
+    CONSOLE_SCREEN_BUFFER_INFO inf;
+public:
+    TermVisual():hConsole(GetStdHandle(STD_OUTPUT_HANDLE)) {
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &inf);
+    }
+    int clrscr();
+    int setCursorVisible(bool visible);
+    int gotoXY(short x, short y);
+    int getscreensize(int* rows, int* cols);
+    int setfgcolor(enum mt::colors cl);
+    int setbgcolor(enum mt::colors cl);
+};
+
 class PseudoGraphics {
     bigNum bn[18];
+    TermVisual *termVis;
 public:
-    PseudoGraphics() {
+    PseudoGraphics(TermVisual &tvis):termVis(&tvis) {
         bc_bigCharRead("BigNum.txt", 18);
     }
     int bc_box(COORD start, COORD size, std::string frameName = "");
@@ -55,66 +71,43 @@ public:
 };
 
 class MyTerm {
-    static HANDLE hConsole;
-    static CONSOLE_SCREEN_BUFFER_INFO inf;
+    
     COORD posInRam;
     PseudoGraphics termGraphics;
     Ram ram;
-    Flag reg;
+    Flag reg; 
+    Operation oper;
     int accum = 0;
     std::recursive_mutex muteAsync;
     MyTermInfo termInfo;
+    TermVisual mt;
     std::map<std::string, rk::keys> keyMap = {
         {"r", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"t", rk::Step}, {std::string(1, 63), rk::F5}
+        , {std::string(1, 64), rk::F6}
     };
     int showTerm();
     std::string rk_readKeyGetch(rk::keys* key, bool isAutoEnter);
-    int rk_readKeyCin(rk::keys* key);
+
     int rk_myTermRegime(bool canon) { termInfo.canon = canon; return 0; };
     int rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint);
     int rk_myTermSave();
     int rk_myTermRestore();
+
     int rk_writeAccum(std::string val);
     void Timer(int time);
     int clearRamNum();
+    void clearLine(int symbCount, int lineNumber);
     void printCounter();
-    bool getchCanon(clock_t start, int symbCount) { return true; }
-    bool getchNotCanon(clock_t start, int symbCount) { return (double)(clock() - start) / CLOCKS_PER_SEC < termInfo.vtime&& symbCount < termInfo.vmin - 1; }
 
 
 public:
-    MyTerm() : posInRam({ 0 ,0 }) {
-        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &inf);
-        //rk_myTermRestore();
-        //auto f = BackPosToBeg;
-        //signal(100, f);
-        //reg.sc_regSet(T, 1);
+    MyTerm() : posInRam({ 0 ,0 }),termGraphics(mt) {
         ram.sc_memoryLoad("ram.txt");
-        ram.sc_memorySet(100, 678, reg);
         if(!termInfo.echo)
-            mt_setCursorVisible(false);
+            mt.setCursorVisible(false);
     }
 
-    void BackPosToBeg() {
-        muteAsync.lock();
-        clearRamNum();
-        posInRam = { 1, 0 };
-        ramPosMove(-1);
-        rk_writeAccum("0");
-        muteAsync.unlock();
-    }
-
-    static int mt_clrscr();
-    static int mt_setCursorVisible(bool visible);
-    static int mt_gotoXY(short x, short y);
-    static int mt_getscreensize(int* rows, int* cols);
-    static int mt_setfgcolor(enum mt::colors cl);
-    static int mt_setbgcolor(enum mt::colors cl);
+    void SetPosInRam(short x, short y);
     int runTerm();
     int ramPosMove(int move);
 };
-
-
-//void PsevdoBackPosToBeg(MyTerm& trm);
-
-

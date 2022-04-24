@@ -7,7 +7,5 @@
 int main() {
 
 	MyTerm term;
-	Ram ram;
-	Flag reg;
 	term.runTerm();
 }
