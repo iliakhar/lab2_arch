@@ -7,8 +7,6 @@
 #include<ctime>
 #include<map>
 #include <future>
-#include <csignal>
-#include <functional>
 #include <mutex>
 #include"mem.h"
 using bigNum = std::pair<unsigned int, unsigned int>;
@@ -79,14 +77,17 @@ class MyTerm {
     Operation oper;
     int accum = 0;
     std::recursive_mutex muteAsync;
+    std::recursive_mutex muteWhileRead;
+    bool isNumberReading = false;
     MyTermInfo termInfo;
     TermVisual mt;
     std::map<std::string, rk::keys> keyMap = {
-        {"r", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"t", rk::Step}, {std::string(1, 63), rk::F5}
+        {"l", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"r", rk::Run}, {std::string(1, 63), rk::F5}
         , {std::string(1, 64), rk::F6}
     };
     int showTerm();
-    std::string rk_readKeyGetch(rk::keys* key, bool isAutoEnter);
+    std::string rk_readKeyGetch(rk::keys* key);
+    std::string readNumber(int numberOfLine);
 
     int rk_myTermRegime(bool canon) { termInfo.canon = canon; return 0; };
     int rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint);
@@ -101,13 +102,16 @@ class MyTerm {
 
 
 public:
-    MyTerm() : posInRam({ 0 ,0 }),termGraphics(mt) {
-        ram.sc_memoryLoad("ram.txt");
+    MyTerm(std::string filename) : posInRam({ 0 ,0 }),termGraphics(mt) {
+        //ram.sc_memoryLoad("ram.txt");
+        ram.sc_memoryObjLoad(filename);
+        reg.sc_regSet(T, 1);
         if(!termInfo.echo)
             mt.setCursorVisible(false);
     }
 
     void SetPosInRam(short x, short y);
-    int runTerm();
+    int CPU();
+    int ALU(int command,int operand);
     int ramPosMove(int move);
 };

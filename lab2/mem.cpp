@@ -59,6 +59,20 @@ int Ram::sc_memoryLoad(std::string filename) {
         return 0;
 }
 
+int Ram::sc_memoryObjLoad(std::string filename) {
+    std::ifstream ofile(filename, std::ios::binary);
+    int placeInRam, operation;
+    if(ofile.is_open())
+    while (!ofile.eof()) {
+        ofile.read(reinterpret_cast<char*>(&placeInRam), sizeof(int));
+        ofile.read(reinterpret_cast<char*>(&operation), sizeof(int));
+        //ofile >> placeInRam;
+        //ofile >> operation;
+        arr[placeInRam] = operation;
+    }
+    return 0;
+}
+
 int Ram::showRam(Flag &reg) {
     int emptyDigits, cell;
     std::cout << "\n  ";
@@ -100,8 +114,8 @@ void Operation::ShowCommandAndOperand(int value, Flag &reg) {
     }
     std::cout << " : ";
     for (int decDegree = 0x10; decDegree != 0; decDegree /= 16) {
-        printf("%x", com / decDegree);
-        com %= decDegree;
+        printf("%x", oper / decDegree);
+        oper %= decDegree;
     }
     m.unlock();
 }

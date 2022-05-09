@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ALU.cpp" />
     <ClCompile Include="flag.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mem.cpp" />
@@ -146,11 +147,19 @@
     <ClCompile Include="MyTerm.cpp" />
     <ClCompile Include="operations.cpp" />
     <ClCompile Include="ReadKey.cpp" />
+    <ClCompile Include="SBTranslator.cpp" />
     <ClCompile Include="TermVisual.cpp" />
+    <ClCompile Include="SATranslator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mem.h" />
     <ClInclude Include="MyTerm.h" />
+    <ClInclude Include="Translator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="basic.sa" />
+    <None Include="basic.sb" />
+    <None Include="beta.sa" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

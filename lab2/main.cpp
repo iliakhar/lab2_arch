@@ -3,9 +3,15 @@
 #include<string>
 #include"MyTerm.h"
 #include"mem.h"
+#include "Translator.h"
 
 int main() {
-
-	MyTerm term;
-	term.runTerm();
+	SBTranslator sbtr;
+	sbtr.Translator("basic.sb", "basic.sa");
+	SAtranslator("basic.sa", "basic.o");
+	MyTerm term("basic.o");
+	term.CPU();
+	//PolishNotation("-5-3");
+	//PolishNotation("-A*(2*(-B+1))/132-C");
+	
 }

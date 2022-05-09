@@ -2,6 +2,7 @@
 #pragma warning(disable : 4996)
 #include<string>
 #include <mutex>
+#include <fstream>
 #include <iostream>
 
 
@@ -39,6 +40,7 @@ public:
 	int sc_memoryGet(int adress, int* value, Flag &reg);
 	int sc_memorySave(std::string filename);
 	int sc_memoryLoad(std::string filename);
+	int sc_memoryObjLoad(std::string filename);
 
 	int showRam(Flag &reg);
 	int showNumInRam(int num);
@@ -47,10 +49,10 @@ public:
 
 class Operation {
 	const int size;
-	const int operations[38] = {
+	const int operations[39] = {
 		0x10, 0x11,
 		0x20, 0x21,
-		0x30, 0x31, 0x32 , 0x33,
+		0x30, 0x31, 0x32 , 0x33, 0x34,
 		0x40, 0x41, 0x42, 0x43,
 		0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
 		0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,

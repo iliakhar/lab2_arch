@@ -1,25 +1,40 @@
 #include"MyTerm.h"
 
-std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
-	//muteAsync.lock();
+std::string MyTerm::rk_readKeyGetch(rk::keys* key) {
+	muteWhileRead.lock();
+	muteAsync.lock();
+	clearLine(40, 22);
+	muteAsync.unlock();
 	bool (*checkCannon)(clock_t start, double tm, int cnt, int min);
-	if(isAutoEnter)
+	if(termInfo.canon)
 		checkCannon = [](clock_t start, double tm, int cnt, int min) {return true; };
 	else
 		checkCannon = [](clock_t start, double tm, int cnt,int min) {return (double)(clock() - start) / CLOCKS_PER_SEC < tm && cnt < min + 1; };
 	std::string newKey;
 	char ch;
 	int symbCount = 0;
-	while (_kbhit())getch();
-	newKey.push_back(getch());
+	//while (_kbhit())getch();
+	while (1) {
+		if (isNumberReading) {
+			*key = rk::ERR;
+			muteWhileRead.unlock();
+			return "";
+		}
+		if (kbhit()) {
+			newKey.push_back(getch());
+			break;
+		}
+	}
 	
 	if (newKey[0] == 0 || newKey[0] == -32 || newKey[0] == 224)
 		newKey[0] = getch();
 
 	switch (newKey[0]) {
 	case 75: *key = rk::Left;
+		muteWhileRead.unlock();
 		return "";
 	case 77: *key = rk::Right;
+		muteWhileRead.unlock();
 		return "";
 	}
 	if (newKey[0] != 63 && newKey[0] != 64) {
@@ -44,8 +59,8 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 	while (checkCannon(start, termInfo.vtime, symbCount, termInfo.vmin)) {
 		if (_kbhit()) {
 			ch = getch();
-			if (ch == '\r' && isAutoEnter)break;
-			if (ch == '\r' && !isAutoEnter)continue;
+			if (ch == '\r' && termInfo.canon)break;
+			if (ch == '\r')continue;
 			if (ch == '\b') {
 				if (symbCount != 0) {
 					symbCount--;
@@ -99,7 +114,7 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key, bool isAutoEnter) {
 	if (it != keyMap.end())
 		*key = it->second;
 	else *key = rk::ERR;
-	//muteAsync.unlock();
+	muteWhileRead.unlock();
 	return newKey;
 }
 
@@ -145,4 +160,51 @@ int MyTerm::rk_writeAccum(std::string val) {
 	}
 	mt.gotoXY(0, 22);
 	return 0;
+}
+
+std::string MyTerm::readNumber(int numberOfLine) {
+	isNumberReading = true;
+	muteWhileRead.lock();
+	muteAsync.lock();
+	clearLine(40, numberOfLine);
+	muteAsync.unlock();
+	std::string number;
+	char ch;
+	int symbCount = 0;
+	
+	while (1) {
+		if (_kbhit()) {
+			ch = getch();
+			if (ch == '\r' && number.size() != 0)break;
+			if (ch == '\b') {
+				if (symbCount != 0) {
+					symbCount--;
+					number.pop_back();
+				}
+				if (termInfo.echo) {
+					muteAsync.lock();
+					mt.gotoXY(0 + symbCount, numberOfLine);
+					std::cout << " ";
+					mt.gotoXY(0 + symbCount, numberOfLine);
+					muteAsync.unlock();
+				}
+				continue;
+			}
+			if(ch>='0'&&ch<='9'||(number.size()==0 && ch == '-')) {
+				number.push_back(ch);
+
+				if (termInfo.echo) {
+					muteAsync.lock();
+					mt.gotoXY(0 + symbCount, numberOfLine);
+					std::cout << number[symbCount];
+					muteAsync.unlock();
+				}
+				symbCount++;
+			}
+			while (_kbhit())getch();
+		}
+	}
+	muteWhileRead.unlock();
+	isNumberReading = false;
+	return number;
 }
