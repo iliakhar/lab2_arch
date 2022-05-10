@@ -4,8 +4,8 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 	try {
 		std::ifstream sbfile(sbfilename);
 		std::ofstream safile(safilename);
-		std::string currentComment, currentLine, tmpLineNumb, command, saLine;
-		int currSbLineNumb(0);
+		std::string currentComment, currentLine, tmpLineNumb, command, saLine, ifLine;
+		int currSbLineNumb(0), ifLineNumb(-1);
 
 		while (std::getline(sbfile, currentLine)) {
 
@@ -25,18 +25,20 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 			//std::cout << tmpLineNumb << " (" << saLineNumb << ")" << "\t" << command << "#\t" << currentLine << "#\n";
 
 			if (command == "IF") {
-				saLine = IfComand(currentLine, saLineNumb);
+				isIfCommand = true;
+				ifLine = IfComand(currentLine);
 				command = GetCommand(currentLine);
+				isIfCommand = false;
+				ifLineNumb = currSaLineNumb;
 			}
-
 			if (command == "INPUT") {
-				saLine = InputComand(currentLine, saLineNumb);
+				saLine = InputComand(currentLine);
 			}
 			else if (command == "OUTPUT") {
-				saLine = OutputComand(currentLine, saLineNumb);
+				saLine = OutputComand(currentLine);
 			}
 			else if (command == "GOTO") {
-				saLine = GotoComand(currentLine, saLineNumb);
+				saLine = GotoComand(currentLine);
 			}
 			else if (command == "LET") {
 				saLine = LetComand(currentLine);
@@ -56,6 +58,11 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 			if (!currentComment.empty()) {
 				saLine += currentComment;
 				currentComment.clear();
+			}
+			if (!ifLine.empty()) {
+				ifLine += GetStrSaLineNumber(currSaLineNumb + 1) + "\n";
+				saLine = ifLine + saLine;
+				ifLine.clear();
 			}
 			safile << saLine;
 			safile << "\n";
@@ -88,13 +95,13 @@ std::string SBTranslator::GetCommand(std::string& currentLine) {
 	return command;
 }
 
-std::string SBTranslator::InputComand(std::string& currentLine, std::string& saLineNumb) {
+std::string SBTranslator::InputComand(std::string& currentLine) {
 	std::string saLine;
 	if (currentLine.size() != 1)
 		throw std::string("Invalid operand");
 	if (!(currentLine[0] >= 'A' && currentLine[0] <= 'Z'))
 		throw std::string("Invalid operand");
-	saLine = saLineNumb + " READ ";
+	saLine = GetStrSaLineNumber() + " READ ";
 	if (variable.find(currentLine.substr(0, 1)) == variable.end()) {
 		variable.insert({ currentLine.substr(0, 1), currVarPos });
 		currVarPos--;
@@ -103,15 +110,15 @@ std::string SBTranslator::InputComand(std::string& currentLine, std::string& saL
 	return saLine;
 }
 
-std::string SBTranslator::OutputComand(std::string& currentLine, std::string& saLineNumb) {
+std::string SBTranslator::OutputComand(std::string& currentLine) {
 	std::string saLine;
 	if (currentLine.size() == 1 && currentLine[0] >= 'A' && currentLine[0] <= 'Z') {
 		if (variable.find(currentLine.substr(0, 1)) == variable.end())
-			CreateVar(currentLine.substr(0, 1), saLine);
-		saLine = saLineNumb + " WRITE " + std::to_string(variable[currentLine.substr(0, 1)]);
+			CreateVar(currentLine.substr(0, 1), saLine, 0);
+		saLine = GetStrSaLineNumber() + " WRITE " + std::to_string(variable[currentLine.substr(0, 1)]);
 	}
 	else if (currentLine.size() >= 1) {
-		saLine = saLineNumb + " WRITE ";
+		saLine = GetStrSaLineNumber() + " WRITE ";
 		for (int i(0); i < currentLine.size(); i++)
 			if (!(currentLine[i] >= '0' && currentLine[i] <= '9'))
 				throw std::string("Invalid operand");
@@ -120,8 +127,8 @@ std::string SBTranslator::OutputComand(std::string& currentLine, std::string& sa
 	return saLine;
 }
 
-std::string SBTranslator::GotoComand(std::string& currentLine, std::string& saLineNumb) {
-	std::string saLine(saLineNumb + " JUMP ");
+std::string SBTranslator::GotoComand(std::string& currentLine) {
+	std::string saLine(GetStrSaLineNumber() + " JUMP ");
 	if (currentLine.empty())
 		throw std::string("Invalid operand");
 	for (int i(0); i < currentLine.size(); i++)
@@ -133,8 +140,44 @@ std::string SBTranslator::GotoComand(std::string& currentLine, std::string& saLi
 	return saLine;
 }
 
-std::string SBTranslator::IfComand(std::string& currentLine, std::string& saLineNumb) {
-	return "Haha";
+std::string SBTranslator::IfComand(std::string& currentLine) {
+	std::string condition, saLine;
+	int symbPos(-1);
+	char allSymb[3] = { '>','<','=' };
+	char symb(0);
+	if (currentLine.find(' ') != std::string::npos) {
+		condition = currentLine.substr(0, currentLine.find_first_of(' '));
+		currentLine = currentLine.substr(currentLine.find_first_of(' ') + 1);
+	}
+	else throw std::string("Invalid condition");
+	for (int i(0); i < 3; i++)
+		if (condition.find_first_of(allSymb[i]) != std::string::npos) {
+			symbPos = condition.find_first_of(allSymb[i]);
+			break;
+		}
+	if(symbPos == -1) throw std::string("Invalid condition");
+	symb = condition[symbPos];
+	condition[symbPos] = '-';
+	condition = condition.substr(0, symbPos + 1) + "(" + condition.substr(symbPos + 1) + ")";
+	condition = "@=" + condition;
+	saLine = LetComand(condition);
+	if (symb == '=') {
+		saLine += "\n" + GetStrSaLineNumber() + " JZ " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
+		currSaLineNumb++;
+	}
+	else if (symb == '<') {
+		saLine += "\n" + GetStrSaLineNumber() + " JNEG " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
+		currSaLineNumb++;
+	}
+	else if (symb == '>') {
+		saLine += "\n" + InvertNumbToAccum(GetVarOrLiterAdress("@"));
+		saLine += GetStrSaLineNumber() + " JNEG " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
+		currSaLineNumb++;
+	}
+	saLine += GetStrSaLineNumber() + " JUMP ";
+	currSaLineNumb++;
+		
+	return saLine;
 }
 
 std::string SBTranslator::GetStrSaLineNumber() {
@@ -144,110 +187,124 @@ std::string SBTranslator::GetStrSaLineNumber() {
 	return saLineNumb;
 }
 
-void SBTranslator::CreateVar(std::string name, std::string& saLine) {
+std::string SBTranslator::GetStrSaLineNumber(int numb) {
+	std::string saLineNumb("00");
+	saLineNumb[0] = '0' + numb / 10;
+	saLineNumb[1] = '0' + numb % 10;
+	return saLineNumb;
+}
+
+void SBTranslator::CreateVar(std::string name, std::string& saLine, int val) {
 	variable.insert({ name, currVarPos });
 	currVarPos--;
-	saLine += std::to_string(currVarPos+1) + " = +0000\n";
+	if(val>=0) saLine += std::to_string(currVarPos+1) + " = +"+decToHex(val)+"\n";
+	else saLine += std::to_string(currVarPos + 1) + " = -" + decToHex(val) + "\n";
 }
 
 std::string SBTranslator::LetComand(std::string& currentLine) {
 	std::string saLine, address;
 	int pseudoVarCount(0);
 	std::map<char, std::string>allOperat = { {'+', "ADD"}, {'-', "SUB"}, {'*', "MUL"}, {'/', "DIVIDE"} };
-	if (!(currentLine.size() >= 3 && currentLine[0] >= 'A' && currentLine[0] <= 'Z' && currentLine[1] == '='))
+	if (!(currentLine.size() >= 3 && (currentLine[0] >= 'A' && currentLine[0] <= 'Z' || (currentLine[0] == '@') && isIfCommand) && currentLine[1] == '='))
 		throw std::string("Invalid equation");
 	if (variable.find(currentLine.substr(0, 1)) == variable.end()) {
-		CreateVar(currentLine.substr(0, 1), saLine);
+		CreateVar(currentLine.substr(0, 1), saLine, 0);
 	}
 	std::string answerVar(currentLine.substr(0,1));
 	currentLine = currentLine.substr(currentLine.find_first_of('=') + 1);
 	std::list<std::string> equation = PolishNotation(currentLine);
 	auto iter = equation.begin();
 	while (iter != equation.end()) {
-		if (((*iter).size() > 1 && (*iter)[1] >= 'A' && (*iter)[1] <= 'Z')) {
-			if (variable.find((*iter).substr(1, 1)) == variable.end())
-				CreateVar((*iter).substr(1, 1), saLine);
+		if (allOperat.find((*iter)[0]) == allOperat.end()) {
+			int copyFrom(0);
+			if ((*iter)[0] == '_') copyFrom = 1;
+			if (variable.find((*iter).substr(copyFrom)) == variable.end())
+				if ((*iter)[1] >= 'A' && (*iter)[1] <= 'Z')
+					CreateVar((*iter).substr(copyFrom), saLine, 0);
+				else CreateVar((*iter).substr(copyFrom), saLine, stoi((*iter).substr(copyFrom)));
 		}
-		else if((*iter)[0] >= 'A' && (*iter)[0] <= 'Z')
-			if (variable.find(*iter) == variable.end())
-				CreateVar(*iter, saLine);
 		iter++;
 	}
-	iter = equation.begin();
-	while (iter != equation.end()) {
-		
-		if (*iter == "+" || *iter == "-" || *iter == "*" || *iter == "/") {
-			char operat = (*iter)[0];
-			iter--;
-			iter--;
-			address = GetVarOrLiterAdress(*iter, saLine);
-			if ((*iter)[0] == '_' && (*iter)[1] >='A' && (*iter)[1] <= 'Z') {
-				saLine += GetStrSaLineNumber() + " LOAD 99\n";
+	if (equation.size() == 1) {
+		iter = equation.begin();
+		saLine += PutVarToAccum(*iter);
+	}
+	else {
+		iter = equation.begin();
+		while (iter != equation.end()) {
+			if (*iter == "+" || *iter == "-" || *iter == "*" || *iter == "/") {
+				char operat = (*iter)[0];
+				iter--;
+				iter--;
+				saLine += PutVarToAccum(*iter);
+				iter = equation.erase(iter);
+				address = GetVarOrLiterAdress(*iter);
+				if ((*iter)[0] == '_')
+					if (operat == '-') operat = '+';
+					else if (operat == '+') operat = '-';
+				saLine += GetStrSaLineNumber() + " " + allOperat[operat] + " " + address + "\n";
 				currSaLineNumb++;
-				saLine += GetStrSaLineNumber() + " SUB " + address + "\n";
-				currSaLineNumb++;
-			}
-			else {
-				saLine += GetStrSaLineNumber() + " LOAD " + address + "\n";
-				currSaLineNumb++;
-			}
+				if ((*iter)[0] == '_' && (operat == '*' || operat == '/')) {
+					saLine += GetStrSaLineNumber() + " STORE 98\n";
+					currSaLineNumb++;
+					saLine += InvertNumbToAccum("98");
+				}
 				
-			iter = equation.erase(iter);
-			address = GetVarOrLiterAdress(*iter, saLine);
-			if ((*iter)[0] == '_' && (*iter)[1] >= 'A' && (*iter)[1] <= 'Z')
-				if (operat == '-') operat = '+';
-				else if (operat == '+') operat = '-';
-			saLine += GetStrSaLineNumber() + " " + allOperat[operat] + " " + address + "\n";
-			currSaLineNumb++;
-			if ((*iter)[0] == '_' && (*iter)[1] >= 'A' && (*iter)[1] <= 'Z' && (operat == '*' || operat == '/')) {
-				saLine += GetStrSaLineNumber() + " STORE 98\n";
-				currSaLineNumb++;
-				saLine += GetStrSaLineNumber() + " LOAD 99\n";
-				currSaLineNumb++;
-				saLine += GetStrSaLineNumber() + " SUB 98\n";
-				currSaLineNumb++;
+				
+				iter = equation.erase(iter);
+				iter = equation.erase(iter);
+				if (equation.size() > 1) {
+					saLine += GetStrSaLineNumber() + " STORE " + GetVarOrLiterAdress("#" + std::to_string(pseudoVarCount)) + "\n";
+					currSaLineNumb++;
+				}
+				iter = equation.insert(iter, "#" + std::to_string(pseudoVarCount));
+				pseudoVarCount++;
 			}
-			
-			saLine += GetStrSaLineNumber() + " STORE "+ GetVarOrLiterAdress("#"+std::to_string(pseudoVarCount), saLine) + "\n";
-			currSaLineNumb++;
-			iter = equation.erase(iter);
-			iter = equation.erase(iter);
-			iter = equation.insert(iter, "#" + std::to_string(pseudoVarCount));
-			pseudoVarCount++;
+			iter++;
 		}
-		iter++;
 	}
+	
 	saLine += GetStrSaLineNumber() + " STORE " + std::to_string(variable[answerVar]) + "\n";
 	currSaLineNumb++;
-	for (int i(0); i < pseudoVarCount; i++) {
-		variable.erase("#" + std::to_string(i));
-		currVarPos++;
-	}
 	if (saLine[saLine.size() - 1] = '\n') saLine.pop_back();
 	return saLine;
 }
+std::string SBTranslator::InvertNumbToAccum(std::string adr) {
+	std::string saLine;
+	saLine += GetStrSaLineNumber() + " LOAD 99\n";
+	currSaLineNumb++;
+	saLine += GetStrSaLineNumber() + " SUB "+ adr + "\n";
+	currSaLineNumb++;
+	return saLine;
+}
 
-std::string SBTranslator::GetVarOrLiterAdress(std::string numb, std::string&saLine) {
-	bool isNeg(false);
-	if (numb[0] == '_') {
-		isNeg = true;
-		numb = numb.substr(1);
-	}
-	if (numb[0] >= 'A' && numb[0] <= 'Z' || numb[0] == '#')
-		if(variable.find(numb) != variable.end())
-			return std::to_string(variable[numb]);
-		else {
-			variable.insert({ numb, currVarPos });
-			currVarPos--;
-			return std::to_string(currVarPos + 1);
-		}
+std::string SBTranslator::GetVarOrLiterAdress(std::string numb) {
+	if (numb[0] == '_') numb = numb.substr(1);
+	if (variable.find(numb) != variable.end())
+		return std::to_string(variable[numb]);
 	else {
-		std::string hex = decToHex(stoi(numb));
-		hex = isNeg ? "-" + hex : "+" + hex;
-		saLine += "98 = " + hex + "\n";
-		return "98";
+		variable.insert({ numb, currVarPos });
+		currVarPos--;
+		return std::to_string(currVarPos + 1);
 	}
 }
+
+std::string SBTranslator::PutVarToAccum(std::string& numb) {
+	std::string address = GetVarOrLiterAdress(numb);
+	std::string saLine;
+	if (numb[0] == '_') {
+		saLine += GetStrSaLineNumber() + " LOAD 99\n";
+		currSaLineNumb++;
+		saLine += GetStrSaLineNumber() + " SUB " + address + "\n";
+		currSaLineNumb++;
+	}
+	else {
+		saLine += GetStrSaLineNumber() + " LOAD " + address + "\n";
+		currSaLineNumb++;
+	}
+	return saLine;
+}
+
 
 std::string decToHex(int dec) {
 	std::string hex;

@@ -102,8 +102,9 @@ int Ram::showNumInRam(int num) {
 }
 
 void Operation::ShowCommandAndOperand(int value, Flag &reg) {
-    int com, oper;
-    sc_commandDecode(value, &com, &oper, reg);
+    int com, oper, decodeRes;
+    decodeRes = sc_commandDecode(value, &com, &oper, reg);
+    if(decodeRes == 0) reg.sc_regSet(E, 0);
     m.lock();
     if (com < 0) std::cout << "-";
     else std::cout << "+";

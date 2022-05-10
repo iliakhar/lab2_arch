@@ -25,7 +25,8 @@ int MyTerm::ALU(int command, int operand) {
 		ram.sc_memoryGet(operand, &val, reg);
 		clearLine(40, 23);
 		mt.gotoXY(0, 23);
-		printf("%x", val);
+		if(val>=0) printf("%x", val);
+		else printf("-%x", abs(val));
 		break;
 	case 0x20:
 		ram.sc_memoryGet(operand, &val, reg);
@@ -41,22 +42,31 @@ int MyTerm::ALU(int command, int operand) {
 	case 0x30:
 		ram.sc_memoryGet(operand, &val, reg);
 		accum += val;
-		rk_writeAccum(std::to_string(accum));
+		if (abs(accum) < 0xFFFF)
+			rk_writeAccum(std::to_string(accum));
+		else reg.sc_regSet(P, 1);
 		break;
 	case 0x31:
 		ram.sc_memoryGet(operand, &val, reg);
 		accum -= val;
-		rk_writeAccum(std::to_string(accum));
+		if (abs(accum) < 0xFFFF)
+			rk_writeAccum(std::to_string(accum));
+		else reg.sc_regSet(P, 1);
 		break;
 	case 0x32:
 		ram.sc_memoryGet(operand, &val, reg);
-		accum *= val;
-		rk_writeAccum(std::to_string(accum));
+		if(val != 0) accum /= val;
+		else reg.sc_regSet(O, 1);
+		if (abs(accum) < 0xFFFF)
+			rk_writeAccum(std::to_string(accum));
+		else reg.sc_regSet(P, 1);
 		break;
 	case 0x33:
 		ram.sc_memoryGet(operand, &val, reg);
-		accum /= val;
-		rk_writeAccum(std::to_string(accum));
+		accum *= val;
+		if(abs(accum)<0xFFFF)
+			rk_writeAccum(std::to_string(accum));
+		else reg.sc_regSet(P, 1);
 		break;
 	case 0x40:
 		SetPosInRam(operand % 10, operand / 10);

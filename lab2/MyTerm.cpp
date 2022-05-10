@@ -45,8 +45,9 @@ int MyTerm::CPU() {
 	posInRam = { 1, 0 };
 	ramPosMove(-1);
 	rk::keys key;
+	std::future<void> f;
 	rk_writeAccum("0");
-	auto f = std::async(std::launch::async, &MyTerm::Timer, this, 1500);
+	printOperation();
 	while (1) {
 		printCounter();
 		rk_readKeyGetch(&key);
@@ -56,18 +57,31 @@ int MyTerm::CPU() {
 			switch (key) {
 			case rk::Left: 
 				ramPosMove(-1);
+				printOperation();
 				break;
 			case rk::Right:
 				ramPosMove(1);
+				printOperation();
 				break;
 			case rk::Save: rk_myTermSave();
 				break;
-			case rk::Reset: SetPosInRam(0, 0);
+			case rk::Step: ExecuteCell();
+				break;
+			case rk::Reset:
+				muteAsync.lock();
 				rk_writeAccum("0");
+				ram.sc_memoryInit();
+				mt.gotoXY(0, 0);
+				ram.sc_memoryObjLoad(filename);
+				ram.showRam(reg);
+				termGraphics.bc_box({ 0, 0 }, { 72, 12 }, "Memory");
+				SetPosInRam(0, 0);
 				reg.sc_regInit();
 				reg.sc_regSet(T, 1);
+				muteAsync.unlock();
 				break;
 			case rk::Run:
+				f = std::async(std::launch::async, &MyTerm::Timer, this, 1500);
 				reg.sc_regSet(T, 0);
 				break;
 			case rk::Load: rk_myTermRestore();
@@ -85,8 +99,10 @@ int MyTerm::CPU() {
 				muteAsync.unlock();
 				try {
 					int newRamPos = stoi(readNumber(22));
-					if (newRamPos >= 0 && newRamPos < 100)
+					if (newRamPos >= 0 && newRamPos < 100) {
 						SetPosInRam(newRamPos % 10, newRamPos / 10);
+						printOperation();
+					}
 					else
 						reg.sc_regSet(M, 1);
 				}
@@ -108,27 +124,46 @@ int MyTerm::CPU() {
 }
 
 void MyTerm::Timer(int time) {
-	int val, command, operand, operation;
-	COORD tmpCord;
+	int val;
 	while (1) {
 		reg.sc_regGet(T, &val);
-		if (val == 0) {
-			tmpCord = posInRam;
-			ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &operation, reg);
-			oper.sc_commandDecode(operation, &command, &operand, reg);
-			muteAsync.lock();
-			mt.gotoXY(82, 7);
-			oper.ShowCommandAndOperand(operation, reg);
-			mt.gotoXY(82, 10);
-			reg.showFlags();
-			muteAsync.unlock();
-			ALU(command, operand);
-			if(tmpCord.Y == posInRam.Y && tmpCord.X == posInRam.X)
-				ramPosMove(1);
-			printCounter();
-		}
+		if (val != 0)
+			return;
+		ExecuteCell();
 		Sleep(time);
 	}
+}
+
+std::pair<int, int> MyTerm::GetComAndOp() {
+	int command, operand, operation;
+	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &operation, reg);
+	oper.sc_commandDecode(operation, &command, &operand, reg);
+	return { command, operand };
+}
+
+void MyTerm::printOperation() {
+	int command, operand, operation;
+	muteAsync.lock();
+	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &operation, reg);
+	oper.sc_commandDecode(operation, &command, &operand, reg);
+	mt.gotoXY(82, 7);
+	oper.ShowCommandAndOperand(operation, reg);
+	muteAsync.unlock();
+}
+
+void MyTerm::ExecuteCell() {
+	COORD tmpCord;
+	tmpCord = posInRam;
+	muteAsync.lock();
+	mt.gotoXY(82, 10);
+	reg.showFlags();
+	muteAsync.unlock();
+	std::pair<int, int> comAndOp = GetComAndOp();
+	ALU(comAndOp.first, comAndOp.second);
+	if (tmpCord.Y == posInRam.Y && tmpCord.X == posInRam.X)
+		ramPosMove(1);
+	printOperation();
+	printCounter();
 }
 
 int MyTerm::clearRamNum() {

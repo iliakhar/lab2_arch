@@ -32,7 +32,7 @@ namespace rk {
 
 struct MyTermInfo {
     bool canon = false;
-    double vtime = 0.8;
+    double vtime = 0.6;
     int vmin = 5;
     bool echo = true;
     bool sigint = 1;
@@ -81,9 +81,10 @@ class MyTerm {
     bool isNumberReading = false;
     MyTermInfo termInfo;
     TermVisual mt;
+    std::string filename;
     std::map<std::string, rk::keys> keyMap = {
-        {"l", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"r", rk::Run}, {std::string(1, 63), rk::F5}
-        , {std::string(1, 64), rk::F6}
+        {"l", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"r", rk::Run},{"t", rk::Step},
+        {std::string(1, 63), rk::F5}, {std::string(1, 64), rk::F6}
     };
     int showTerm();
     std::string rk_readKeyGetch(rk::keys* key);
@@ -99,12 +100,14 @@ class MyTerm {
     int clearRamNum();
     void clearLine(int symbCount, int lineNumber);
     void printCounter();
+    std::pair<int, int> GetComAndOp();
+    void printOperation();
 
-
+    void ExecuteCell();
 public:
-    MyTerm(std::string filename) : posInRam({ 0 ,0 }),termGraphics(mt) {
+    MyTerm(std::string soFilename) : posInRam({ 0 ,0 }),termGraphics(mt), filename(soFilename) {
         //ram.sc_memoryLoad("ram.txt");
-        ram.sc_memoryObjLoad(filename);
+        ram.sc_memoryObjLoad(soFilename);
         reg.sc_regSet(T, 1);
         if(!termInfo.echo)
             mt.setCursorVisible(false);
