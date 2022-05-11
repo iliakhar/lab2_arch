@@ -81,7 +81,7 @@ int MyTerm::CPU() {
 				muteAsync.unlock();
 				break;
 			case rk::Run:
-				f = std::async(std::launch::async, &MyTerm::Timer, this, 1500);
+				f = std::async(std::launch::async, &MyTerm::Timer, this, 1000);
 				reg.sc_regSet(T, 0);
 				break;
 			case rk::Load: rk_myTermRestore();
@@ -142,10 +142,9 @@ std::pair<int, int> MyTerm::GetComAndOp() {
 }
 
 void MyTerm::printOperation() {
-	int command, operand, operation;
+	int operation;
 	muteAsync.lock();
 	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &operation, reg);
-	oper.sc_commandDecode(operation, &command, &operand, reg);
 	mt.gotoXY(82, 7);
 	oper.ShowCommandAndOperand(operation, reg);
 	muteAsync.unlock();

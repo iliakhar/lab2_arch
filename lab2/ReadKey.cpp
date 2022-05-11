@@ -190,7 +190,7 @@ std::string MyTerm::readNumber(int numberOfLine) {
 				}
 				continue;
 			}
-			if(ch>='0'&&ch<='9'||(number.size()==0 && ch == '-')) {
+			if (ch >= '0' && ch <= '9' || (number.size() == 0 && ch == '-')) {
 				number.push_back(ch);
 
 				if (termInfo.echo) {
