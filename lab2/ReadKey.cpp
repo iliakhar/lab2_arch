@@ -1,6 +1,6 @@
 #include"MyTerm.h"
 
-std::string MyTerm::rk_readKeyGetch(rk::keys* key) {
+void MyTerm::rk_readKeyGetch(rk::keys* key) {
 	muteWhileRead.lock();
 	muteAsync.lock();
 	clearLine(40, 22);
@@ -18,7 +18,7 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key) {
 		if (isNumberReading) {
 			*key = rk::ERR;
 			muteWhileRead.unlock();
-			return "";
+			return;
 		}
 		if (kbhit()) {
 			newKey.push_back(getch());
@@ -32,10 +32,10 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key) {
 	switch (newKey[0]) {
 	case 75: *key = rk::Left;
 		muteWhileRead.unlock();
-		return "";
+		return;
 	case 77: *key = rk::Right;
 		muteWhileRead.unlock();
-		return "";
+		return;
 	}
 	if (newKey[0] != 63 && newKey[0] != 64) {
 		symbCount++;
@@ -115,7 +115,6 @@ std::string MyTerm::rk_readKeyGetch(rk::keys* key) {
 		*key = it->second;
 	else *key = rk::ERR;
 	muteWhileRead.unlock();
-	return newKey;
 }
 
 int MyTerm::rk_myTermRegime(bool canon, int vtime, int vmin, int echo, int sigint) {

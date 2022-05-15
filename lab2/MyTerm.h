@@ -87,7 +87,7 @@ class MyTerm {
         {std::string(1, 63), rk::F5}, {std::string(1, 64), rk::F6}
     };
     int showTerm();
-    std::string rk_readKeyGetch(rk::keys* key);
+    void rk_readKeyGetch(rk::keys* key);
     std::string readNumber(int numberOfLine);
 
     int rk_myTermRegime(bool canon) { termInfo.canon = canon; return 0; };

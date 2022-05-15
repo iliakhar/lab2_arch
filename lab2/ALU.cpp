@@ -90,6 +90,20 @@ int MyTerm::ALU(int command, int operand) {
 		mt.gotoXY(82, 10);
 		reg.showFlags();
 		break;
+	case 0x55:
+		if (accum > 0) {
+			SetPosInRam(operand % 10, operand / 10);
+			printCounter();
+		}
+		break;
+	case 0x73:
+		int val, cell2Address;
+		ram.sc_memoryGet(operand, &val, reg);
+		ram.sc_memoryGet(accum, &cell2Address, reg);
+		ram.sc_memorySet(cell2Address, val, reg);
+		mt.gotoXY((cell2Address%10 * 7) + 2, cell2Address /10 + 1);
+		ram.showNumInRam(val);
+		break;
 	}
 	muteAsync.unlock();
 };

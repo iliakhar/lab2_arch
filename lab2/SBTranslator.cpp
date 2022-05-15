@@ -5,7 +5,7 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 		std::ifstream sbfile(sbfilename);
 		std::ofstream safile(safilename);
 		std::string currentComment, currentLine, tmpLineNumb, command, saLine, ifLine;
-		int currSbLineNumb(0), ifLineNumb(-1), endCount(0);
+		int currSbLineNumb(0), endCount(0);
 
 		while (std::getline(sbfile, currentLine)) {
 
@@ -29,7 +29,6 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 				ifLine = IfComand(currentLine);
 				command = GetCommand(currentLine);
 				isIfCommand = false;
-				ifLineNumb = currSaLineNumb;
 			}
 			if (command == "INPUT") {
 				saLine = InputComand(currentLine);
@@ -173,8 +172,10 @@ std::string SBTranslator::IfComand(std::string& currentLine) {
 		currSaLineNumb++;
 	}
 	else if (symb == '>') {
-		saLine += "\n" + InvertNumbToAccum(GetVarOrLiterAdress("@"));
+		/*saLine += "\n" + InvertNumbToAccum(GetVarOrLiterAdress("@"));
 		saLine += GetStrSaLineNumber() + " JNEG " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
+		currSaLineNumb++;*/
+		saLine += "\n" + GetStrSaLineNumber() + " JNS " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
 		currSaLineNumb++;
 	}
 	saLine += GetStrSaLineNumber() + " JUMP ";
@@ -204,6 +205,10 @@ void SBTranslator::CreateVar(std::string name, std::string& saLine, int val) {
 	else saLine += std::to_string(currVarPos + 1) + " = -" + decToHex(val) + "\n";
 }
 
+//ab + cd +*
+//#0 cd +*
+//#0 #1 *
+//Та да!!!!!!!!!!!!
 std::string SBTranslator::LetComand(std::string& currentLine) {
 	std::string saLine, address;
 	int pseudoVarCount(0);
