@@ -27,7 +27,6 @@ int MyTerm::showTerm() {
 		strNumb++;
 	}
 	fclose(data);
-	termGraphics.bc_printBigNumber(0xFAB2, { 1, 13 });
 
 	termGraphics.bc_box({ 0, 0 }, { 72, 12 }, "Memory");
 	termGraphics.bc_box({ 72, 0 }, { 30, 3 }, "accumulator");

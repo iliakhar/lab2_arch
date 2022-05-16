@@ -84,10 +84,12 @@ bool hexToDec(std::string hex, int& dec) {
 //abñ /+ 
 //a + b / c
 //-a  _a
+//-A, (-A+2)
+//A+-B=>A+_B
 std::list<std::string> PolishNotation(std::string equation) {
 	std::string dop, s;
 	std::list<std::string> finalEquation;
-	std::string symbols = "+-*/";
+	std::string symbols[2] = { "+-*/", "0011"};
 	try {
 		if (equation[0] == '-')
 			equation[0] = '_';
@@ -102,12 +104,13 @@ std::list<std::string> PolishNotation(std::string equation) {
 		
 		for (int i(0); i < equation.size(); i++) {
 			
-			if (symbols.find(equation[i]) != std::string::npos) {
+			if (symbols[0].find(equation[i]) != std::string::npos) {
 				if (!s.empty()) {
 					finalEquation.push_back(s);
 					s.clear();
 				}
-				while (!dop.empty() && dop[dop.size() - 1] != '(' && symbols.find(equation[i]) < symbols.find(dop[dop.size() - 1])) {
+				//a*b*c-3*2 => abc**32*-
+				while (!dop.empty() && dop[dop.size() - 1] != '(' && symbols[1][symbols[0].find(equation[i])] < symbols[1][symbols[0].find(dop[dop.size() - 1])]) {
 					s.push_back(dop[dop.size() - 1]);
 					finalEquation.push_back(s);
 					s.clear();
@@ -150,8 +153,8 @@ std::list<std::string> PolishNotation(std::string equation) {
 		exit(1);
 	}
 	
-	/*for (auto iter = finalEquation.begin(); iter != finalEquation.end(); iter++)
-		std::cout << *iter << " ";*/
+	for (auto iter = finalEquation.begin(); iter != finalEquation.end(); iter++)
+		std::cout << *iter << " ";
 	return finalEquation;
 }
 
