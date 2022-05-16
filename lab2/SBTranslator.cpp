@@ -3,12 +3,12 @@
 void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 	try {
 		std::ifstream sbfile(sbfilename);
-		std::ofstream safile(safilename);
-		std::string currentComment, currentLine, tmpLineNumb, command, saLine, ifLine;
+		
+		std::string currentComment, currentLine, tmpLineNumb, command, saLine, ifLine, allSaLines;
 		int currSbLineNumb(0), endCount(0);
-
+		
 		while (std::getline(sbfile, currentLine)) {
-
+			if(endCount>0) throw std::string("Invalid End");
 			for (int i(0); i < currentLine.size(); i++)
 				if (currentLine[i] >= '0' && currentLine[i] <= '9')
 					tmpLineNumb.push_back(currentLine[i]);
@@ -29,6 +29,8 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 				ifLine = IfComand(currentLine);
 				command = GetCommand(currentLine);
 				isIfCommand = false;
+				if (command == "REM")
+					throw std::string("Invalid second command");
 			}
 			if (command == "INPUT") {
 				saLine = InputComand(currentLine);
@@ -44,7 +46,7 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 				currSaLineNumb--;
 			}
 			else if (command == "END") {
-				if(endCount>0) throw std::string("End > 1");
+				//if(endCount>0) throw std::string("End > 1");
 				if(currentLine.empty())
 					saLine = saLineNumb + " HALT 00";
 				else throw std::string("Invalid End command");
@@ -65,13 +67,26 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 				saLine = ifLine + saLine;
 				ifLine.clear();
 			}
-			safile << saLine;
-			safile << "\n";
+			allSaLines += saLine + "\n";
 			saLine.clear();
 			tmpLineNumb.clear();
 			currSaLineNumb++;
 		}
+		sbfile.close();
 		if(currSaLineNumb >= currVarPos) throw std::string("RAM overflow");
+
+		std::list<std::string> saProg;
+		while (allSaLines != "") {
+			saProg.push_back(allSaLines.substr(0, allSaLines.find_first_of('\n')));
+			allSaLines = allSaLines.substr(allSaLines.find_first_of('\n') + 1);
+		}
+		
+		FixGoto(sbfilename, saProg);
+		std::ofstream safile(safilename);
+		for (auto it(saProg.begin()); it != saProg.end(); it++) {
+			safile << *it;
+			safile << "\n";
+		}
 	}
 	catch (std::string strErr) {
 		std::cout << strErr;
@@ -80,6 +95,24 @@ void SBTranslator::Translator(std::string sbfilename, std::string safilename) {
 	catch (...) {
 		std::cout << "\nHZ che ne tak\n";
 		exit(1);
+	}
+}
+
+void SBTranslator::FixGoto(std::string filename, std::list<std::string> &saProg) {
+	std::string currentLine, tmpLineNumb, gotoVal;
+	std::ifstream sbfile(filename);
+	auto it = saProg.begin();
+	while (std::getline(sbfile, currentLine)) {
+		if (currentLine.find("GOTO") != std::string::npos) {
+			currentLine = currentLine.substr(currentLine.find_first_of("GOTO") + 5);
+			if(currentLine.size() == 1)currentLine = "0" + currentLine;
+			gotoVal = correspondingLines[currentLine];
+			if (correspondingLines.find(currentLine) == correspondingLines.end())
+				throw std::string("Invalid Goto");
+			while (it->find("JUMP ?") == std::string::npos) it++;
+			*it = it->substr(0, it->find_first_of("JUMP") + 5) + gotoVal + it->substr(it->find_first_of("JUMP") + 6);
+			it++;
+		}
 	}
 }
 
@@ -129,16 +162,16 @@ std::string SBTranslator::OutputComand(std::string& currentLine) {
 }
 
 std::string SBTranslator::GotoComand(std::string& currentLine) {
-	std::string saLine(GetStrSaLineNumber() + " JUMP ");
+	std::string saLine(GetStrSaLineNumber() + " JUMP ?");
 	if (currentLine.empty())
 		throw std::string("Invalid operand");
 	for (int i(0); i < currentLine.size(); i++)
 		if (!(currentLine[i] >= '0' && currentLine[i] <= '9'))
 			throw std::string("Invalid operand");
-	if (currentLine.size() == 1)currentLine = "0" + currentLine;
+	/*if (currentLine.size() == 1)currentLine = "0" + currentLine;
 	if (correspondingLines.find(currentLine) != correspondingLines.end())
 		saLine += correspondingLines[currentLine];
-	else throw std::string("Invalid operand");
+	else throw std::string("Invalid operand");*/
 	return saLine;
 }
 

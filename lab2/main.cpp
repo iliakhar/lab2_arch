@@ -3,6 +3,7 @@
 #include<string>
 #include"MyTerm.h"
 #include"mem.h"
+#include "Disk.h"
 #include "Translator.h"
 
 int main() {

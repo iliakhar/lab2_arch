@@ -26,7 +26,7 @@ namespace rk {
         Load, Save, Run,
         Step, Reset, Accumulator,
         InstructionCounter, ERR,
-        Right,  Left, F5, F6
+        Right,  Left, F5, F6, SetSpeed
     };
 }
 
@@ -75,7 +75,7 @@ class MyTerm {
     Ram ram;
     Flag reg; 
     Operation oper;
-    int accum = 0;
+    int accum, timerSpeed;
     std::recursive_mutex muteAsync;
     std::recursive_mutex muteWhileRead;
     bool isNumberReading = false;
@@ -84,7 +84,7 @@ class MyTerm {
     std::string filename;
     std::map<std::string, rk::keys> keyMap = {
         {"l", rk::Load}, {"s", rk::Save}, {"i", rk::Reset}, {"r", rk::Run},{"t", rk::Step},
-        {std::string(1, 63), rk::F5}, {std::string(1, 64), rk::F6}
+        {"q", rk::SetSpeed}, {std::string(1, 63), rk::F5}, {std::string(1, 64), rk::F6}
     };
     int showTerm();
     void rk_readKeyGetch(rk::keys* key);
@@ -105,7 +105,7 @@ class MyTerm {
 
     void ExecuteCell();
 public:
-    MyTerm(std::string soFilename) : posInRam({ 0 ,0 }),termGraphics(mt), filename(soFilename) {
+    MyTerm(std::string soFilename) : posInRam({ 0 ,0 }),termGraphics(mt), filename(soFilename), accum(0), timerSpeed(500) {
         //ram.sc_memoryLoad("ram.txt");
         ram.sc_memoryObjLoad(soFilename);
         reg.sc_regSet(T, 1);

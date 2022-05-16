@@ -27,6 +27,7 @@ class SBTranslator {
 	std::string InvertNumbToAccum(std::string adr);
 	std::string GetStrSaLineNumber(int numb);
 	std::string GetVarOrLiterAdress(std::string numb);
+	void FixGoto(std::string filename, std::list<std::string>& saProg);
 	void CreateVar(std::string name, std::string& saLine, int val);
 public:
 	void Translator(std::string sbfilename, std::string safilename);

@@ -3,5 +3,6 @@ s  - save
 r  - run               
 t  - step              
 i  - reset             
+q  - set the speed     
 F5 - accumulator       
 F6 - instructionCounter

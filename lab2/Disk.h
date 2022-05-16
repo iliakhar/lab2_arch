@@ -40,9 +40,10 @@ class Disk {
     
 public:
     Disk(double dsk):count(0),disk(dsk), selectSize(512) {}
-    void show_partitions(tPART* part, int num_parts);
+    void show_partitions(tPART* part);
     void enter_partitions(tPART* part, tCHS geo, int num_parts);
     void setDisk(double dsk) { disk = dsk; }
+    double getDisk() { return disk; }
 
     int g_lba2chs(tLBA orig, tCHS* dest);
     int g_lba2large(tLBA orig, tLARGE* dest);

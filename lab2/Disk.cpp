@@ -153,10 +153,10 @@ void Disk::enter_partitions(tPART* part, tCHS geo, int num_parts){
         part[count - 1].activ = 1;
 }
 
-void Disk::show_partitions(tPART* part, int num_parts)
+void Disk::show_partitions(tPART* part)
 {
 
-    for (int i = 0; i < num_parts; i++) {
+    for (int i = 0; i < count; i++) {
 
         printf("%d", part[i].activ);
         printf("\t");

@@ -81,11 +81,18 @@ int MyTerm::CPU() {
 				muteAsync.unlock();
 				break;
 			case rk::Run:
-				f = std::async(std::launch::async, &MyTerm::Timer, this, 1000);
+				f = std::async(std::launch::async, &MyTerm::Timer, this, timerSpeed);
 				reg.sc_regSet(T, 0);
 				break;
 			case rk::Load: rk_myTermRestore();
 				break;
+			case rk::SetSpeed: {
+				muteAsync.lock();
+				clearLine(40, 22);
+				muteAsync.unlock();
+				timerSpeed = stoi(readNumber(22));
+				break;
+			}
 			case rk::F5: {
 				muteAsync.lock();
 				clearLine(40, 22);
