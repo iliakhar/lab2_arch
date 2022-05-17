@@ -196,6 +196,7 @@ int MyTerm::ramPosMove(int move) {
 		else posInRam.X += incr;
 	mt.gotoXY((posInRam.X * 7) + 2, posInRam.Y + 1);
 	ram.sc_memoryGet(posInRam.Y * 10 + posInRam.X, &numInRam, reg);
+	
 	ram.showNumInRam(numInRam);
 	mt.setbgcolor(mt::Black);
 	termGraphics.bc_printBigNumber(numInRam, { 1, 13 });

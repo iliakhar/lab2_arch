@@ -13,6 +13,7 @@ int MyTerm::ALU(int command, int operand) {
 			ram.sc_memorySet(operand, val, reg);
 			mt.gotoXY(2 + operand % 10 * 7, 1 + operand / 10);
 			ram.showNumInRam(val);
+			if (val > 0xFFFF) reg.sc_regSet(P, 1);
 			mt.gotoXY(0, 22);
 		}
 		catch (...) {
@@ -44,14 +45,14 @@ int MyTerm::ALU(int command, int operand) {
 		accum += val;
 		if (abs(accum) < 0xFFFF)
 			rk_writeAccum(std::to_string(accum));
-		else reg.sc_regSet(P, 1);
+		else handleOverflow(operand);
 		break;
 	case 0x31:
 		ram.sc_memoryGet(operand, &val, reg);
 		accum -= val;
 		if (abs(accum) < 0xFFFF)
 			rk_writeAccum(std::to_string(accum));
-		else reg.sc_regSet(P, 1);
+		else handleOverflow(operand);
 		break;
 	case 0x32:
 		ram.sc_memoryGet(operand, &val, reg);
@@ -59,14 +60,14 @@ int MyTerm::ALU(int command, int operand) {
 		else reg.sc_regSet(O, 1);
 		if (abs(accum) < 0xFFFF)
 			rk_writeAccum(std::to_string(accum));
-		else reg.sc_regSet(P, 1);
+		else handleOverflow(operand);
 		break;
 	case 0x33:
 		ram.sc_memoryGet(operand, &val, reg);
 		accum *= val;
-		if(abs(accum)<0xFFFF)
+		if (abs(accum) < 0xFFFF)
 			rk_writeAccum(std::to_string(accum));
-		else reg.sc_regSet(P, 1);
+		else handleOverflow(operand);
 		break;
 	case 0x40:
 		SetPosInRam(operand % 10, operand / 10);
@@ -106,4 +107,13 @@ int MyTerm::ALU(int command, int operand) {
 		break;
 	}
 	muteAsync.unlock();
-};
+}
+void MyTerm::handleOverflow(int address) {
+	reg.sc_regSet(T, 1);
+	mt.gotoXY(82, 10);
+	reg.showFlags();
+	ram.sc_memorySet(address, 0, reg);
+	reg.sc_regSet(P, 1);
+	mt.gotoXY(82, 10);
+	reg.showFlags();
+}

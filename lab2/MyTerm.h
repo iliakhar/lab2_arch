@@ -116,5 +116,6 @@ public:
     void SetPosInRam(short x, short y);
     int CPU();
     int ALU(int command,int operand);
+    void handleOverflow(int address);
     int ramPosMove(int move);
 };

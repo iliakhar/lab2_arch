@@ -12,7 +12,7 @@ int main() {
 	SAtranslator("basic.sa", "basic.o");
 	MyTerm term("basic.o");
 	term.CPU();
-	//PolishNotation("5*3/4*2/3-2+2");
+	//PolishNotation("5/3*3");
 	//PolishNotation("-A*(2*(-B+1))/132-C");
 	
 }
