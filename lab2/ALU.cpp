@@ -26,8 +26,8 @@ int MyTerm::ALU(int command, int operand) {
 		ram.sc_memoryGet(operand, &val, reg);
 		clearLine(40, 23);
 		mt.gotoXY(0, 23);
-		if(val>=0) printf("%x", val);
-		else printf("-%x", abs(val));
+		if(val>=0) printf("%d", val);
+		else printf("-%d", abs(val));
 		break;
 	case 0x20:
 		ram.sc_memoryGet(operand, &val, reg);
@@ -112,7 +112,7 @@ void MyTerm::handleOverflow(int address) {
 	reg.sc_regSet(T, 1);
 	mt.gotoXY(82, 10);
 	reg.showFlags();
-	ram.sc_memorySet(address, 0, reg);
+	//ram.sc_memorySet(address, 0, reg);
 	reg.sc_regSet(P, 1);
 	mt.gotoXY(82, 10);
 	reg.showFlags();

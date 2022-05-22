@@ -110,7 +110,7 @@ std::list<std::string> PolishNotation(std::string equation) {
 					s.clear();
 				}
 				//a*b*c-3*2 => abc**32*-
-				while (!dop.empty() && dop[dop.size() - 1] != '(' && symbols[1][symbols[0].find(equation[i])] < symbols[1][symbols[0].find(dop[dop.size() - 1])]) {
+				while (!dop.empty() && dop[dop.size() - 1] != '(' && symbols[1][symbols[0].find(equation[i])] <= symbols[1][symbols[0].find(dop[dop.size() - 1])]) {
 					s.push_back(dop[dop.size() - 1]);
 					finalEquation.push_back(s);
 					s.clear();
@@ -153,8 +153,8 @@ std::list<std::string> PolishNotation(std::string equation) {
 		exit(1);
 	}
 	
-	for (auto iter = finalEquation.begin(); iter != finalEquation.end(); iter++)
-		std::cout << *iter << " ";
+	/*for (auto iter = finalEquation.begin(); iter != finalEquation.end(); iter++)
+		std::cout << *iter << " ";*/
 	return finalEquation;
 }
 
@@ -190,7 +190,7 @@ bool checkEqationFormat(std::string equation) {
 		//Если произошли не состыковачки в плюс, удачки, выходим братва
 		if (bracket < 0) return false;
 
-		//Только цифо(е)рки (Илья сказал, "Как хочешь..."), да буковки подходят
+		//Только цифо(е)рки, да буковки подходят
 		if (equation[i] == '_' && !((equation[i + 1] >= 'A' && equation[i + 1] <= 'Z') || (equation[i + 1] >= '0' && equation[i + 1] <= '9')))
 			return false;
 
@@ -201,14 +201,14 @@ bool checkEqationFormat(std::string equation) {
 		//Подсчёт открывающихся скобок
 			else bracket++;
 
-		//После ")"  цифо(е)рки (Илья сказал, "Как хочешь...", буковки, да "_" - не ставить
+		//После ")"  цифо(е)рки, буковки, да "_" - не ставить
 		if (equation[i] == ')')
 			if (equation[i + 1] >= 'A' && equation[i + 1] <= 'Z' || equation[i + 1] >= '0' && equation[i + 1] <= '9' || equation[i + 1] == '_')
 				return false;
 		//Подсчёт закрывающихся скобок
 			else bracket--;
 
-		//После операндов только цифо(е)рки (Илья сказал, "Как хочешь..."), буковки, "_", да "("
+		//После операндов только цифо(е)рки, буковки, "_", да "("
 		if ((equation[i] == '+' || equation[i] == '-' || equation[i] == '*' || equation[i] == '/') &&
 			!((equation[i + 1] >= 'A' && equation[i + 1] <= 'Z') || (equation[i + 1] >= '0' && equation[i + 1] <= '9') || equation[i + 1] == '_' || equation[i + 1] == '('))
 			return false;

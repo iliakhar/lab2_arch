@@ -305,9 +305,9 @@ std::string SBTranslator::LetComand(std::string& currentLine) {
 		}
 	}
 	
-	saLine += GetStrSaLineNumber() + " STORE " + std::to_string(variable[answerVar]) + "\n";
+	saLine += GetStrSaLineNumber() + " STORE " + std::to_string(variable[answerVar]);
 	currSaLineNumb++;
-	if (saLine[saLine.size() - 1] = '\n') saLine.pop_back();
+	//if (saLine[saLine.size() - 1] == '\n') saLine.pop_back();
 	return saLine;
 }
 std::string SBTranslator::InvertNumbToAccum(std::string adr) {

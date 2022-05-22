@@ -105,7 +105,7 @@ class MyTerm {
 
     void ExecuteCell();
 public:
-    MyTerm(std::string soFilename) : posInRam({ 0 ,0 }),termGraphics(mt), filename(soFilename), accum(0), timerSpeed(500) {
+    MyTerm(std::string soFilename) : posInRam({ 0 ,0 }),termGraphics(mt), filename(soFilename), accum(0), timerSpeed(10) {
         //ram.sc_memoryLoad("ram.txt");
         ram.sc_memoryObjLoad(soFilename);
         reg.sc_regSet(T, 1);
