@@ -193,6 +193,7 @@ std::string SBTranslator::IfComand(std::string& currentLine) {
 	if(symbPos == -1) throw std::string("Invalid condition");
 	symb = condition[symbPos];
 	condition[symbPos] = '-';
+	//a=3+5
 	condition = condition.substr(0, symbPos + 1) + "(" + condition.substr(symbPos + 1) + ")";
 	condition = "@=" + condition;
 	saLine = LetComand(condition);
@@ -205,10 +206,10 @@ std::string SBTranslator::IfComand(std::string& currentLine) {
 		currSaLineNumb++;
 	}
 	else if (symb == '>') {
-		/*saLine += "\n" + InvertNumbToAccum(GetVarOrLiterAdress("@"));
+		saLine += "\n" + InvertNumbToAccum(GetVarOrLiterAdress("@"));
 		saLine += GetStrSaLineNumber() + " JNEG " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
-		currSaLineNumb++;*/
-		saLine += "\n" + GetStrSaLineNumber() + " JNS " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
+		currSaLineNumb++;
+		//saLine += "\n" + GetStrSaLineNumber() + " JNS " + GetStrSaLineNumber(currSaLineNumb + 2) + "\n";
 		currSaLineNumb++;
 	}
 	saLine += GetStrSaLineNumber() + " JUMP ";
@@ -260,7 +261,7 @@ std::string SBTranslator::LetComand(std::string& currentLine) {
 			int copyFrom(0);
 			if ((*iter)[0] == '_') copyFrom = 1;
 			if (variable.find((*iter).substr(copyFrom)) == variable.end())
-				if ((*iter)[1] >= 'A' && (*iter)[1] <= 'Z')
+				if ((*iter)[copyFrom] >= 'A' && (*iter)[copyFrom] <= 'Z')
 					CreateVar((*iter).substr(copyFrom), saLine, 0);
 				else CreateVar((*iter).substr(copyFrom), saLine, stoi((*iter).substr(copyFrom)));
 		}
@@ -290,7 +291,6 @@ std::string SBTranslator::LetComand(std::string& currentLine) {
 					currSaLineNumb++;
 					saLine += InvertNumbToAccum("98");
 				}
-				
 				
 				iter = equation.erase(iter);
 				iter = equation.erase(iter);
